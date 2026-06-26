@@ -1,32 +1,42 @@
-# MangaView
+# MangaView — Rama: bbc
 
-Plataforma web para leer manga en español.
+Rama base del proyecto. Documenta las decisiones iniciales de arquitectura según el **ADR-01**.
 
-## Tecnologías
+## ¿Qué hay aquí?
 
-- **Frontend:** React + TypeScript
-- **Backend:** Node.js + Express
-- **Base de datos:** PostgreSQL
-- **Imágenes:** Cloudinary CDN
+Estructura inicial del proyecto con la configuración base del backend en Node.js y el esquema de base de datos en PostgreSQL.
 
-## Ramas
+## Decisiones (ADR-01)
 
-| Rama | Descripción |
-|------|-------------|
-| `bbc` | Estructura base según ADR-01 |
-| `hexagonal` | Implementación en C# .NET con arquitectura hexagonal |
-| `integracion-de-apis` | API REST + integración con Cloudinary |
-| `main` | Avance completo del proyecto |
+| Tecnología | Rol |
+|------------|-----|
+| React + TypeScript | Frontend — interfaz de usuario |
+| Node.js + Express | Backend — API REST |
+| PostgreSQL | Base de datos relacional |
+| Cloudinary | CDN para imágenes de manga |
 
-## Cómo correr el backend (Node.js)
+## Por qué este stack
+
+React permite construir el visor de páginas con componentes reutilizables. Node.js maneja bien muchas peticiones concurrentes. PostgreSQL encaja con el modelo relacional del sistema. Cloudinary evita saturar el servidor con imágenes pesadas.
+
+## Cómo correr
 
 ```bash
 cd backend
 npm install
 cp .env.example .env
+# Llena las variables en .env
 npm run dev
 ```
 
-## Cómo correr el proyecto .NET (rama hexagonal)
+## Estructura
 
-Abrir `MangaView.sln` en Visual Studio y presionar F5.
+```
+backend/
+├── src/
+│   ├── index.js          # Entrada del servidor
+│   └── config/
+│       ├── database.js   # Conexión a PostgreSQL
+│       └── schema.sql    # Tablas del sistema
+└── package.json
+```
