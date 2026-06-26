@@ -1,32 +1,76 @@
-# MangaView
+# MangaView — Rama: integracion-de-apis
 
-Plataforma web para leer manga en español.
+Rama que implementa la API REST completa y la integración con servicios externos. Corresponde al **ADR-02** (vistas arquitectónicas) y **ADR-03** (estilo cliente-servidor en capas).
 
-## Tecnologías
+## ¿Qué hay aquí?
 
-- **Frontend:** React + TypeScript
-- **Backend:** Node.js + Express
-- **Base de datos:** PostgreSQL
-- **Imágenes:** Cloudinary CDN
+API REST completa con rutas, controladores, autenticación JWT y conexión a Cloudinary. Aquí se pueden ver aplicadas las 4 vistas arquitectónicas del sistema.
 
-## Ramas
+## Decisiones (ADR-02 + ADR-03)
 
-| Rama | Descripción |
-|------|-------------|
-| `bbc` | Estructura base según ADR-01 |
-| `hexagonal` | Implementación en C# .NET con arquitectura hexagonal |
-| `integracion-de-apis` | API REST + integración con Cloudinary |
-| `main` | Avance completo del proyecto |
+**Estilo arquitectónico:** Cliente-servidor en capas
 
-## Cómo correr el backend (Node.js)
+| Capa | Tecnología | Responsabilidad |
+|------|------------|-----------------|
+| Presentación | React + TypeScript | Interfaz del usuario |
+| Lógica de negocio | Node.js + Express | Procesar peticiones y reglas |
+| Datos | PostgreSQL | Guardar y consultar información |
+| Externo | Cloudinary CDN | Servir imágenes de manga |
+
+## Vistas arquitectónicas aplicadas
+
+- **Vista lógica** → controladores y rutas organizados por entidad (manga, capítulo, usuario)
+- **Vista física** → backend en servidor, BD en otro nodo, imágenes en Cloudinary
+- **Vista de despliegue** → Node.js en puerto 3000, PostgreSQL en puerto 5432
+- **Vista de procesos** → usuario pide capítulo → API consulta BD → retorna URLs → cliente carga imágenes de Cloudinary
+
+## Endpoints disponibles
+
+```
+GET    /api/mangas                  Catálogo completo
+GET    /api/mangas/:id              Un manga específico
+GET    /api/mangas/genero/:genero   Por género
+
+GET    /api/capitulos/manga/:id     Capítulos de un manga
+GET    /api/capitulos/:id           Páginas de un capítulo
+POST   /api/capitulos/:id/progreso  Guardar progreso (requiere token)
+
+POST   /api/usuarios/registro       Crear cuenta
+POST   /api/usuarios/login          Iniciar sesión
+GET    /api/usuarios/perfil         Ver perfil (requiere token)
+GET    /api/usuarios/favoritos      Ver favoritos (requiere token)
+POST   /api/usuarios/favoritos/:id  Agregar favorito (requiere token)
+```
+
+## Cómo correr
 
 ```bash
 cd backend
 npm install
 cp .env.example .env
+# Llena las variables en .env
 npm run dev
 ```
 
-## Cómo correr el proyecto .NET (rama hexagonal)
+## Estructura
 
-Abrir `MangaView.sln` en Visual Studio y presionar F5.
+```
+backend/
+├── src/
+│   ├── index.js
+│   ├── config/
+│   │   ├── database.js
+│   │   ├── cloudinary.js
+│   │   └── schema.sql
+│   ├── routes/
+│   │   ├── manga.routes.js
+│   │   ├── capitulo.routes.js
+│   │   └── usuario.routes.js
+│   ├── controllers/
+│   │   ├── manga.controller.js
+│   │   ├── capitulo.controller.js
+│   │   └── usuario.controller.js
+│   └── middleware/
+│       └── auth.js
+└── package.json
+```
