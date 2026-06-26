@@ -1,0 +1,16 @@
+# Node
+node_modules/
+.env
+npm-debug.log*
+
+# .NET
+bin/
+obj/
+*.user
+.vs/
+*.suo
+*.userprefs
+
+# OS
+.DS_Store
+Thumbs.db
