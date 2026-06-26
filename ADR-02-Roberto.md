@@ -168,3 +168,5 @@ sequenceDiagram
 ## Declaración de uso de IA
 
 Use IA (Claude de Anthropic) para ayudarme a redactar y estructurar este documento. Las decisiones y el contenido son del proyecto que he estado desarrollando durante el cuatrimestre. Revise todo antes de subirlo.
+
+<!-- Rama: integracion-de-apis — aquí se aplican las 4 vistas arquitectónicas -->
