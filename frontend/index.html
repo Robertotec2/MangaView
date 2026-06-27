@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MangaView</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0d0d0d;
+      color: #f0f0f0;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #111;
+      border-bottom: 3px solid #e94560;
+      padding: 18px 40px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    header h1 {
+      font-size: 28px;
+      color: #fff;
+      letter-spacing: 1px;
+    }
+
+    header span {
+      color: #e94560;
+    }
+
+    .search-bar {
+      margin-left: auto;
+      display: flex;
+      gap: 10px;
+    }
+
+    .search-bar input {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 8px 16px;
+      color: #fff;
+      font-size: 14px;
+      width: 220px;
+      outline: none;
+    }
+
+    .search-bar input:focus {
+      border-color: #e94560;
+    }
+
+    .filtros {
+      padding: 20px 40px 0;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .filtro-btn {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      color: #aaa;
+      padding: 6px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .filtro-btn:hover, .filtro-btn.active {
+      background: #e94560;
+      border-color: #e94560;
+      color: #fff;
+    }
+
+    .seccion {
+      padding: 30px 40px;
+    }
+
+    .seccion h2 {
+      font-size: 18px;
+      color: #aaa;
+      margin-bottom: 20px;
+      border-left: 3px solid #e94560;
+      padding-left: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: #1a1a1a;
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: 1px solid #222;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 24px rgba(233,69,96,0.3);
+      border-color: #e94560;
+    }
+
+    .card img {
+      width: 100%;
+      height: 240px;
+      object-fit: cover;
+      background: #222;
+    }
+
+    .card-info {
+      padding: 12px;
+    }
+
+    .card-info h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-info p {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge.finalizado { background: #1a3a2a; color: #4caf7d; }
+    .badge.en_curso   { background: #3a2a1a; color: #e9a046; }
+
+    .genero-tag {
+      float: right;
+      font-size: 10px;
+      color: #e94560;
+      background: #2a1520;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 60px;
+      color: #555;
+      font-size: 16px;
+    }
+
+    .error {
+      text-align: center;
+      padding: 60px;
+      color: #e94560;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: #1a1a1a;
+      border-radius: 16px;
+      max-width: 500px;
+      width: 90%;
+      overflow: hidden;
+      border: 1px solid #333;
+    }
+
+    .modal img {
+      width: 100%;
+      height: 280px;
+      object-fit: cover;
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .modal-body h2 { font-size: 22px; margin-bottom: 6px; }
+    .modal-body .autor { color: #aaa; font-size: 14px; margin-bottom: 16px; }
+    .modal-body p { color: #ccc; font-size: 14px; line-height: 1.7; margin-bottom: 16px; }
+
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .btn-primary { background: #e94560; color: #fff; }
+    .btn-secondary { background: #333; color: #aaa; }
+
+    .stats {
+      display: flex;
+      gap: 30px;
+      padding: 20px 40px;
+      border-bottom: 1px solid #1e1e1e;
+    }
+
+    .stat { text-align: center; }
+    .stat .num { font-size: 24px; font-weight: 700; color: #e94560; }
+    .stat .lbl { font-size: 11px; color: #666; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Manga<span>View</span></h1>
+  <div class="search-bar">
+    <input type="text" id="busqueda" placeholder="Buscar manga..." oninput="filtrar()"/>
+  </div>
+</header>
+
+<div class="stats" id="stats"></div>
+
+<div class="filtros" id="filtros">
+  <button class="filtro-btn active" onclick="filtrarGenero('todos', this)">Todos</button>
+</div>
+
+<div class="seccion">
+  <h2 id="titulo-seccion">Catálogo</h2>
+  <div class="grid" id="grid">
+    <div class="loading">Cargando catálogo...</div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal" onclick="cerrarModal(event)">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<script>
+  let mangas = [];
+  let filtroActual = 'todos';
+
+  fetch('http://localhost:3000/api/mangas')
+    .then(r => r.json())
+    .then(data => {
+      mangas = data;
+      renderStats();
+      renderFiltros();
+      renderGrid(mangas);
+    })
+    .catch(() => {
+      document.getElementById('grid').innerHTML =
+        '<div class="error">No se pudo conectar a la API.<br>Asegúrate de que el servidor esté corriendo en localhost:3000</div>';
+    });
+
+  function renderStats() {
+    const total = mangas.length;
+    const finalizados = mangas.filter(m => m.estado === 'finalizado').length;
+    const enCurso = mangas.filter(m => m.estado === 'en_curso').length;
+    document.getElementById('stats').innerHTML = `
+      <div class="stat"><div class="num">${total}</div><div class="lbl">Títulos</div></div>
+      <div class="stat"><div class="num">${enCurso}</div><div class="lbl">En curso</div></div>
+      <div class="stat"><div class="num">${finalizados}</div><div class="lbl">Finalizados</div></div>
+    `;
+  }
+
+  function renderFiltros() {
+    const generos = [...new Set(mangas.map(m => m.genero).filter(Boolean))];
+    const cont = document.getElementById('filtros');
+    generos.forEach(g => {
+      const btn = document.createElement('button');
+      btn.className = 'filtro-btn';
+      btn.textContent = g;
+      btn.onclick = () => filtrarGenero(g, btn);
+      cont.appendChild(btn);
+    });
+  }
+
+  function filtrarGenero(genero, btn) {
+    filtroActual = genero;
+    document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filtrar();
+  }
+
+  function filtrar() {
+    const q = document.getElementById('busqueda').value.toLowerCase();
+    let resultado = mangas;
+    if (filtroActual !== 'todos') resultado = resultado.filter(m => m.genero === filtroActual);
+    if (q) resultado = resultado.filter(m => m.titulo.toLowerCase().includes(q) || (m.autor||'').toLowerCase().includes(q));
+    document.getElementById('titulo-seccion').textContent = `Catálogo (${resultado.length} títulos)`;
+    renderGrid(resultado);
+  }
+
+  function renderGrid(lista) {
+    const grid = document.getElementById('grid');
+    if (!lista.length) {
+      grid.innerHTML = '<div class="loading">No se encontraron resultados</div>';
+      return;
+    }
+    grid.innerHTML = lista.map(m => `
+      <div class="card" onclick="abrirModal(${m.id})">
+        <img src="${m.portada_url || ''}" alt="${m.titulo}" onerror="this.src='https://via.placeholder.com/180x240/1a1a1a/e94560?text=Sin+portada'"/>
+        <div class="card-info">
+          <h3>${m.titulo}</h3>
+          <p>${m.autor || 'Autor desconocido'}</p>
+          <span class="badge ${m.estado}">${m.estado === 'en_curso' ? 'En curso' : 'Finalizado'}</span>
+          <span class="genero-tag">${m.genero || ''}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function abrirModal(id) {
+    const m = mangas.find(x => x.id === id);
+    if (!m) return;
+    document.getElementById('modal-content').innerHTML = `
+      <img src="${m.portada_url || ''}" alt="${m.titulo}" onerror="this.src='https://via.placeholder.com/500x280/1a1a1a/e94560?text=${m.titulo}'"/>
+      <div class="modal-body">
+        <h2>${m.titulo}</h2>
+        <div class="autor">por ${m.autor || 'Autor desconocido'} · ${m.genero || ''}</div>
+        <p>${m.sinopsis || 'Sin sinopsis disponible.'}</p>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="cerrarModal()">Cerrar</button>
+          <button class="btn btn-primary">Leer ahora</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('modal').classList.add('open');
+  }
+
+  function cerrarModal(e) {
+    if (!e || e.target === document.getElementById('modal')) {
+      document.getElementById('modal').classList.remove('open');
+    }
+  }
+</script>
+</body>
+</html>
