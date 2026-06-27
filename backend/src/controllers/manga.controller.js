@@ -1,8 +1,8 @@
-const pool = require('../config/database');
+const db = require('../patterns/DatabaseSingleton');
 
 const getAll = async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM mangas ORDER BY titulo');
+    const { rows } = await db.query('SELECT * FROM mangas ORDER BY titulo');
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -11,7 +11,7 @@ const getAll = async (req, res) => {
 
 const getById = async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM mangas WHERE id = $1', [req.params.id]);
+    const { rows } = await db.query('SELECT * FROM mangas WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'Manga no encontrado' });
     res.json(rows[0]);
   } catch (err) {
@@ -21,7 +21,7 @@ const getById = async (req, res) => {
 
 const getByGenero = async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM mangas WHERE genero = $1', [req.params.genero]);
+    const { rows } = await db.query('SELECT * FROM mangas WHERE genero = $1', [req.params.genero]);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
