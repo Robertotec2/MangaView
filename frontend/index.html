@@ -5,362 +5,431 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MangaView</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #0d0d0d;
-      color: #f0f0f0;
-      min-height: 100vh;
-    }
-
-    header {
-      background: #111;
-      border-bottom: 3px solid #e94560;
-      padding: 18px 40px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    header h1 {
-      font-size: 28px;
-      color: #fff;
-      letter-spacing: 1px;
-    }
-
-    header span {
-      color: #e94560;
-    }
-
-    .search-bar {
-      margin-left: auto;
-      display: flex;
-      gap: 10px;
-    }
-
-    .search-bar input {
-      background: #1e1e1e;
-      border: 1px solid #333;
-      border-radius: 8px;
-      padding: 8px 16px;
-      color: #fff;
-      font-size: 14px;
-      width: 220px;
-      outline: none;
-    }
-
-    .search-bar input:focus {
-      border-color: #e94560;
-    }
-
-    .filtros {
-      padding: 20px 40px 0;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .filtro-btn {
-      background: #1e1e1e;
-      border: 1px solid #333;
-      color: #aaa;
-      padding: 6px 16px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 13px;
-      transition: all 0.2s;
-    }
-
-    .filtro-btn:hover, .filtro-btn.active {
-      background: #e94560;
-      border-color: #e94560;
-      color: #fff;
-    }
-
-    .seccion {
-      padding: 30px 40px;
-    }
-
-    .seccion h2 {
-      font-size: 18px;
-      color: #aaa;
-      margin-bottom: 20px;
-      border-left: 3px solid #e94560;
-      padding-left: 12px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 20px;
-    }
-
-    .card {
-      background: #1a1a1a;
-      border-radius: 10px;
-      overflow: hidden;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-      border: 1px solid #222;
-    }
-
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 24px rgba(233,69,96,0.3);
-      border-color: #e94560;
-    }
-
-    .card img {
-      width: 100%;
-      height: 240px;
-      object-fit: cover;
-      background: #222;
-    }
-
-    .card-info {
-      padding: 12px;
-    }
-
-    .card-info h3 {
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .card-info p {
-      font-size: 12px;
-      color: #888;
-      margin-bottom: 8px;
-    }
-
-    .badge {
-      display: inline-block;
-      font-size: 10px;
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-
-    .badge.finalizado { background: #1a3a2a; color: #4caf7d; }
-    .badge.en_curso   { background: #3a2a1a; color: #e9a046; }
-
-    .genero-tag {
-      float: right;
-      font-size: 10px;
-      color: #e94560;
-      background: #2a1520;
-      padding: 2px 8px;
-      border-radius: 10px;
-    }
-
-    .loading {
-      text-align: center;
-      padding: 60px;
-      color: #555;
-      font-size: 16px;
-    }
-
-    .error {
-      text-align: center;
-      padding: 60px;
-      color: #e94560;
-    }
-
-    /* Modal */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.85);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal-overlay.open { display: flex; }
-
-    .modal {
-      background: #1a1a1a;
-      border-radius: 16px;
-      max-width: 500px;
-      width: 90%;
-      overflow: hidden;
-      border: 1px solid #333;
-    }
-
-    .modal img {
-      width: 100%;
-      height: 280px;
-      object-fit: cover;
-    }
-
-    .modal-body {
-      padding: 24px;
-    }
-
-    .modal-body h2 { font-size: 22px; margin-bottom: 6px; }
-    .modal-body .autor { color: #aaa; font-size: 14px; margin-bottom: 16px; }
-    .modal-body p { color: #ccc; font-size: 14px; line-height: 1.7; margin-bottom: 16px; }
-
-    .modal-footer {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-    }
-
-    .btn {
-      padding: 10px 20px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .btn-primary { background: #e94560; color: #fff; }
-    .btn-secondary { background: #333; color: #aaa; }
-
-    .stats {
-      display: flex;
-      gap: 30px;
-      padding: 20px 40px;
-      border-bottom: 1px solid #1e1e1e;
-    }
-
-    .stat { text-align: center; }
-    .stat .num { font-size: 24px; font-weight: 700; color: #e94560; }
-    .stat .lbl { font-size: 11px; color: #666; text-transform: uppercase; }
+    :root{--bg:#0d0d0d;--bg2:#111;--bg3:#1a1a1a;--bg4:#222;--acc:#e94560;--teal:#0f3460;--nav:#1a1a2e;--txt:#f0f0f0;--txt2:#aaa;--txt3:#555;--border:#2a2a2a;--card:#161616;}
+    .light{--bg:#f5f5f5;--bg2:#fff;--bg3:#eee;--bg4:#ddd;--txt:#111;--txt2:#555;--txt3:#999;--border:#ccc;--card:#fff;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;transition:background .2s,color .2s;}
+    nav{background:var(--bg2);border-bottom:3px solid var(--acc);padding:14px 32px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100;}
+    .logo{font-size:22px;font-weight:700;cursor:pointer;}.logo span{color:var(--acc);}
+    .nav-links{display:flex;gap:10px;margin-left:auto;align-items:center;}
+    .nav-btn{background:none;border:none;color:var(--txt2);font-size:13px;cursor:pointer;padding:6px 12px;border-radius:6px;transition:all .2s;}
+    .nav-btn:hover{background:var(--bg3);color:var(--txt);}
+    .nav-btn.acc{background:var(--acc);color:#fff;}.nav-btn.acc:hover{opacity:.85;}
+    .theme-btn{font-size:18px;background:none;border:none;cursor:pointer;}
+    .page{display:none;}.page.active{display:block;}
+    .auth-wrap{min-height:90vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+    .auth-box{background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:40px;width:100%;max-width:420px;}
+    .auth-box h2{font-size:24px;margin-bottom:6px;}.auth-box p{color:var(--txt2);font-size:14px;margin-bottom:28px;}
+    .form-group{margin-bottom:16px;}.form-group label{display:block;font-size:13px;color:var(--txt2);margin-bottom:6px;}
+    .form-group input{width:100%;background:var(--bg4);border:1px solid var(--border);color:var(--txt);padding:10px 14px;border-radius:8px;font-size:14px;outline:none;transition:border .2s;}
+    .form-group input:focus{border-color:var(--acc);}
+    .btn-full{width:100%;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;transition:opacity .2s;}
+    .btn-full:hover{opacity:.85;}
+    .auth-switch{text-align:center;margin-top:18px;font-size:13px;color:var(--txt2);}.auth-switch a{color:var(--acc);cursor:pointer;}
+    .msg{padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:13px;display:none;}
+    .msg.error{background:#3a1520;color:#f56565;display:block;}.msg.success{background:#1a3a2a;color:#68d391;display:block;}
+    .home-hero{background:linear-gradient(135deg,var(--nav),var(--teal));padding:40px 32px 30px;}
+    .home-hero h1{font-size:32px;margin-bottom:8px;}.home-hero p{color:#aac;font-size:15px;}
+    .search-row{display:flex;gap:10px;margin-top:20px;}
+    .search-row input{flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;outline:none;}
+    .search-row input::placeholder{color:#aac;}
+    .stats-row{display:flex;gap:24px;padding:16px 32px;border-bottom:1px solid var(--border);}
+    .stat .num{font-size:22px;font-weight:700;color:var(--acc);}.stat .lbl{font-size:11px;color:var(--txt3);text-transform:uppercase;}
+    .filters{padding:14px 32px;display:flex;gap:8px;flex-wrap:wrap;}
+    .fbtn{background:var(--bg3);border:1px solid var(--border);color:var(--txt2);padding:5px 14px;border-radius:20px;cursor:pointer;font-size:12px;transition:all .2s;}
+    .fbtn.active,.fbtn:hover{background:var(--acc);border-color:var(--acc);color:#fff;}
+    .section{padding:24px 32px;}.section h2{font-size:15px;color:var(--txt2);margin-bottom:16px;border-left:3px solid var(--acc);padding-left:10px;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:18px;}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:transform .2s,box-shadow .2s;}
+    .card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(233,69,96,.25);border-color:var(--acc);}
+    .card img{width:100%;height:220px;object-fit:cover;background:var(--bg4);}
+    .card-info{padding:10px;}.card-info h3{font-size:13px;font-weight:600;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .card-info p{font-size:11px;color:var(--txt2);margin-bottom:6px;}
+    .badge{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;}
+    .badge.finalizado{background:#1a3a2a;color:#4caf7d;}.badge.en_curso{background:#3a2a1a;color:#e9a046;}
+    .genre-tag{float:right;font-size:10px;color:var(--acc);background:#2a1520;padding:2px 7px;border-radius:10px;}
+    .empty{text-align:center;padding:60px;color:var(--txt3);}
+    .detail-hero{display:flex;gap:32px;padding:32px;background:linear-gradient(135deg,var(--nav),var(--teal));}
+    .detail-cover{width:200px;min-width:200px;height:280px;object-fit:cover;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+    .detail-info h1{font-size:26px;margin-bottom:6px;}.detail-info .autor{color:#aac;font-size:14px;margin-bottom:12px;}
+    .detail-info .sinopsis{color:#ccc;font-size:14px;line-height:1.7;margin-bottom:16px;}
+    .detail-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+    .tag{background:rgba(233,69,96,.2);color:var(--acc);padding:4px 12px;border-radius:20px;font-size:12px;}
+    .detail-actions{display:flex;gap:10px;flex-wrap:wrap;}
+    .btn-acc{background:var(--acc);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .2s;}
+    .btn-acc:hover{opacity:.85;}
+    .btn-out{background:none;color:var(--txt2);border:1px solid var(--border);padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer;transition:all .2s;}
+    .btn-out:hover{border-color:var(--acc);color:var(--acc);}
+    .chapters-section{padding:24px 32px;}.chapters-section h2{font-size:16px;margin-bottom:14px;color:var(--txt2);border-left:3px solid var(--acc);padding-left:10px;}
+    .chapter-item{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer;transition:all .2s;}
+    .chapter-item:hover{border-color:var(--acc);background:var(--bg3);}
+    .chapter-num{font-size:13px;font-weight:600;color:var(--acc);}.chapter-title{font-size:13px;color:var(--txt2);}.chapter-arrow{color:var(--txt3);font-size:18px;}
+    .reader-wrap{background:#000;min-height:100vh;display:flex;flex-direction:column;}
+    .reader-header{background:rgba(0,0,0,.9);padding:12px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #222;}
+    .reader-header h2{font-size:15px;color:#fff;}.reader-header .chap{font-size:13px;color:#888;}
+    .back-btn{background:none;border:none;color:#aaa;cursor:pointer;font-size:22px;line-height:1;}
+    .reader-body{flex:1;display:flex;align-items:center;justify-content:center;position:relative;min-height:80vh;padding-bottom:70px;}
+    .reader-page{max-width:800px;width:100%;}.reader-page img{width:100%;display:block;}
+    .no-pages{color:#555;text-align:center;padding:80px 20px;}
+    .reader-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,.9);padding:14px 24px;display:flex;align-items:center;justify-content:center;gap:20px;border-top:1px solid #222;}
+    .reader-nav button{background:var(--bg3);border:1px solid var(--border);color:var(--txt);padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;transition:all .2s;}
+    .reader-nav button:hover:not(:disabled){border-color:var(--acc);color:var(--acc);}
+    .reader-nav button:disabled{opacity:.3;cursor:not-allowed;}
+    .page-counter{color:#aaa;font-size:14px;min-width:80px;text-align:center;}
+    .reader-click-zones{position:absolute;inset:0;display:flex;z-index:1;}
+    .zone-left,.zone-right{flex:1;cursor:pointer;}
+    .profile-wrap{max-width:700px;margin:40px auto;padding:0 24px;}
+    .profile-card{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:32px;margin-bottom:20px;}
+    .profile-card h2{font-size:18px;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:12px;}
+    .profile-field{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;}
+    .profile-field .lbl{color:var(--txt2);}
+    .privacy-wrap{max-width:800px;margin:40px auto;padding:0 32px 60px;}
+    .privacy-wrap h1{font-size:28px;margin-bottom:8px;}.privacy-wrap .date{color:var(--txt2);font-size:13px;margin-bottom:32px;}
+    .privacy-wrap h2{font-size:17px;margin:24px 0 10px;color:var(--acc);}
+    .privacy-wrap p{font-size:14px;line-height:1.8;color:var(--txt2);margin-bottom:10px;}
+    .favs-wrap{padding:24px 32px;}.favs-wrap h1{font-size:22px;margin-bottom:20px;}
+    .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border);color:var(--txt);padding:10px 20px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;}
+    .toast.show{opacity:1;}
+    @media(max-width:600px){.detail-hero{flex-direction:column;}.detail-cover{width:100%;height:240px;}.grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));}}
   </style>
 </head>
 <body>
-
-<header>
-  <h1>Manga<span>View</span></h1>
-  <div class="search-bar">
-    <input type="text" id="busqueda" placeholder="Buscar manga..." oninput="filtrar()"/>
+<nav>
+  <div class="logo" onclick="goHome()">Manga<span>View</span></div>
+  <div class="nav-links">
+    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+    <button class="nav-btn" onclick="showPage('privacyPage')">Privacidad</button>
+    <button class="nav-btn" id="favsBtn" onclick="showFavs()" style="display:none">♥ Favoritos</button>
+    <button class="nav-btn" id="profileBtn" onclick="showProfile()" style="display:none">Mi perfil</button>
+    <button class="nav-btn acc" id="loginBtn" onclick="showPage('authPage')">Iniciar sesión</button>
+    <button class="nav-btn" id="logoutBtn" onclick="logout()" style="display:none">Salir</button>
   </div>
-</header>
+</nav>
+<div class="toast" id="toast"></div>
 
-<div class="stats" id="stats"></div>
-
-<div class="filtros" id="filtros">
-  <button class="filtro-btn active" onclick="filtrarGenero('todos', this)">Todos</button>
+<div class="page" id="authPage">
+  <div class="auth-wrap">
+    <div class="auth-box">
+      <h2 id="authTitle">Iniciar sesión</h2>
+      <p id="authSub">Accede a tu cuenta para guardar tu progreso</p>
+      <div class="msg" id="authMsg"></div>
+      <div class="form-group" id="nameGroup" style="display:none"><label>Nombre</label><input type="text" id="authName" placeholder="Tu nombre"/></div>
+      <div class="form-group"><label>Correo</label><input type="email" id="authEmail" placeholder="tu@correo.com"/></div>
+      <div class="form-group"><label>Contraseña</label><input type="password" id="authPass" placeholder="••••••••"/></div>
+      <button class="btn-full" onclick="submitAuth()" id="authSubmit">Entrar</button>
+      <div class="auth-switch"><span id="authSwitch">¿No tienes cuenta? <a onclick="toggleAuthMode()">Regístrate</a></span></div>
+      <div class="auth-switch" style="margin-top:8px"><a onclick="showPage('homePage')" style="color:var(--txt2)">Continuar sin cuenta →</a></div>
+    </div>
+  </div>
 </div>
 
-<div class="seccion">
-  <h2 id="titulo-seccion">Catálogo</h2>
-  <div class="grid" id="grid">
-    <div class="loading">Cargando catálogo...</div>
+<div class="page active" id="homePage">
+  <div class="home-hero">
+    <h1>Bienvenido a MangaView</h1>
+    <p>Encuentra y lee tu manga favorito en español</p>
+    <div class="search-row"><input type="text" id="searchInput" placeholder="Buscar por título o autor..." oninput="filterMangas()"/></div>
   </div>
+  <div class="stats-row" id="statsRow"></div>
+  <div class="filters" id="filtersRow"><button class="fbtn active" onclick="filterByGenre('todos',this)">Todos</button></div>
+  <div class="section"><h2 id="sectionTitle">Catálogo</h2><div class="grid" id="mangaGrid"><div class="empty">Cargando...</div></div></div>
 </div>
 
-<div class="modal-overlay" id="modal" onclick="cerrarModal(event)">
-  <div class="modal" id="modal-content"></div>
+<div class="page" id="detailPage"><div id="detailContent"></div></div>
+<div class="page" id="readerPage"><div class="reader-wrap" id="readerContent"></div></div>
+
+<div class="page" id="profilePage">
+  <div class="profile-wrap"><div class="profile-card"><h2>Mi perfil</h2><div id="profileContent"></div></div></div>
+</div>
+
+<div class="page" id="favsPage">
+  <div class="favs-wrap"><h1>♥ Mis favoritos</h1><div class="grid" id="favsGrid"><div class="empty">Cargando...</div></div></div>
+</div>
+
+<div class="page" id="privacyPage">
+  <div class="privacy-wrap">
+    <h1>Política de Privacidad</h1>
+    <p class="date">Última actualización: Junio 2026</p>
+    <h2>1. Información que recopilamos</h2>
+    <p>MangaView recopila la información que el usuario proporciona al momento del registro: nombre, correo electrónico y contraseña. También registramos el progreso de lectura y los títulos marcados como favoritos.</p>
+    <h2>2. Uso de la información</h2>
+    <p>Los datos recopilados se utilizan exclusivamente para personalizar la experiencia dentro de la plataforma. No vendemos ni compartimos tu información personal con terceros.</p>
+    <h2>3. Seguridad</h2>
+    <p>Las contraseñas se almacenan usando un algoritmo de hash seguro (bcryptjs). La comunicación entre cliente y servidor se realiza mediante tokens JWT con tiempo de expiración de 7 días.</p>
+    <h2>4. Almacenamiento local</h2>
+    <p>MangaView utiliza localStorage del navegador para mantener la sesión activa. No utilizamos cookies de rastreo ni publicidad de ningún tipo.</p>
+    <h2>5. Derechos del usuario</h2>
+    <p>Puedes solicitar la eliminación de tu cuenta y todos tus datos contactando al administrador. Una vez eliminados, los datos no pueden recuperarse.</p>
+    <h2>6. Cambios a esta política</h2>
+    <p>Nos reservamos el derecho de actualizar esta política. Los cambios importantes serán notificados dentro de la plataforma.</p>
+    <br/><button class="btn-acc" onclick="goHome()">← Volver al catálogo</button>
+  </div>
 </div>
 
 <script>
-  let mangas = [];
-  let filtroActual = 'todos';
+const API='http://localhost:3000/api';
+let mangas=[],currentGenre='todos',authMode='login',currentChapter=null,currentPage=0,isDark=true;
 
-  fetch('http://localhost:3000/api/mangas')
-    .then(r => r.json())
-    .then(data => {
-      mangas = data;
-      renderStats();
-      renderFiltros();
-      renderGrid(mangas);
-    })
-    .catch(() => {
-      document.getElementById('grid').innerHTML =
-        '<div class="error">No se pudo conectar a la API.<br>Asegúrate de que el servidor esté corriendo en localhost:3000</div>';
-    });
+function toggleTheme(){isDark=!isDark;document.body.classList.toggle('light',!isDark);document.querySelector('.theme-btn').textContent=isDark?'🌙':'☀️';}
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);}
+function goHome(){showPage('homePage');}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
-  function renderStats() {
-    const total = mangas.length;
-    const finalizados = mangas.filter(m => m.estado === 'finalizado').length;
-    const enCurso = mangas.filter(m => m.estado === 'en_curso').length;
-    document.getElementById('stats').innerHTML = `
-      <div class="stat"><div class="num">${total}</div><div class="lbl">Títulos</div></div>
-      <div class="stat"><div class="num">${enCurso}</div><div class="lbl">En curso</div></div>
-      <div class="stat"><div class="num">${finalizados}</div><div class="lbl">Finalizados</div></div>
-    `;
-  }
+function toggleAuthMode(){
+  authMode=authMode==='login'?'register':'login';const r=authMode==='register';
+  document.getElementById('authTitle').textContent=r?'Crear cuenta':'Iniciar sesión';
+  document.getElementById('authSub').textContent=r?'Regístrate para guardar tu progreso':'Accede a tu cuenta para guardar tu progreso';
+  document.getElementById('nameGroup').style.display=r?'block':'none';
+  document.getElementById('authSubmit').textContent=r?'Registrarse':'Entrar';
+  document.getElementById('authSwitch').innerHTML=r?'¿Ya tienes cuenta? <a onclick="toggleAuthMode()">Inicia sesión</a>':'¿No tienes cuenta? <a onclick="toggleAuthMode()">Regístrate</a>';
+  document.getElementById('authMsg').className='msg';
+}
 
-  function renderFiltros() {
-    const generos = [...new Set(mangas.map(m => m.genero).filter(Boolean))];
-    const cont = document.getElementById('filtros');
-    generos.forEach(g => {
-      const btn = document.createElement('button');
-      btn.className = 'filtro-btn';
-      btn.textContent = g;
-      btn.onclick = () => filtrarGenero(g, btn);
-      cont.appendChild(btn);
-    });
-  }
+async function submitAuth(){
+  const email=document.getElementById('authEmail').value.trim(),pass=document.getElementById('authPass').value,name=document.getElementById('authName').value.trim(),msgEl=document.getElementById('authMsg');
+  if(!email||!pass){msgEl.textContent='Completa todos los campos';msgEl.className='msg error';return;}
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  if(!emailRegex.test(email)){msgEl.textContent='Escribe un correo válido (ejemplo: usuario@gmail.com)';msgEl.className='msg error';return;}
+  if(pass.length < 6){msgEl.textContent='La contraseña debe tener al menos 6 caracteres';msgEl.className='msg error';return;}
+  try{
+    let res;
+    if(authMode==='login')res=await fetch(`${API}/usuarios/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({correo:email,password:pass})});
+    else{if(!name){msgEl.textContent='Escribe tu nombre';msgEl.className='msg error';return;}res=await fetch(`${API}/usuarios/registro`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nombre:name,correo:email,password:pass})});}
+    const data=await res.json();
+    if(!res.ok){msgEl.textContent=data.error||'Error al procesar';msgEl.className='msg error';return;}
+    if(authMode==='login'){localStorage.setItem('token',data.token);localStorage.setItem('user',JSON.stringify(data.usuario));updateNav();showPage('homePage');toast('Bienvenido, '+data.usuario.nombre);}
+    else{msgEl.textContent='Cuenta creada. Ahora inicia sesión.';msgEl.className='msg success';authMode='login';setTimeout(()=>toggleAuthMode(),1000);}
+  }catch{msgEl.textContent='No se pudo conectar al servidor';msgEl.className='msg error';}
+}
 
-  function filtrarGenero(genero, btn) {
-    filtroActual = genero;
-    document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    filtrar();
-  }
+function logout(){localStorage.removeItem('token');localStorage.removeItem('user');updateNav();goHome();toast('Sesión cerrada');}
+function updateNav(){const u=JSON.parse(localStorage.getItem('user')||'null');document.getElementById('loginBtn').style.display=u?'none':'';document.getElementById('logoutBtn').style.display=u?'':'none';document.getElementById('profileBtn').style.display=u?'':'none';document.getElementById('favsBtn').style.display=u?'':'none';}
+function getToken(){return localStorage.getItem('token');}
 
-  function filtrar() {
-    const q = document.getElementById('busqueda').value.toLowerCase();
-    let resultado = mangas;
-    if (filtroActual !== 'todos') resultado = resultado.filter(m => m.genero === filtroActual);
-    if (q) resultado = resultado.filter(m => m.titulo.toLowerCase().includes(q) || (m.autor||'').toLowerCase().includes(q));
-    document.getElementById('titulo-seccion').textContent = `Catálogo (${resultado.length} títulos)`;
-    renderGrid(resultado);
-  }
+async function loadCatalog(){
+  try{const res=await fetch(`${API}/mangas`);mangas=await res.json();renderStats();renderFilters();renderGrid(mangas);}
+  catch{document.getElementById('mangaGrid').innerHTML='<div class="empty">No se pudo conectar a la API. Asegúrate de que el servidor esté corriendo en localhost:3000</div>';}
+}
 
-  function renderGrid(lista) {
-    const grid = document.getElementById('grid');
-    if (!lista.length) {
-      grid.innerHTML = '<div class="loading">No se encontraron resultados</div>';
-      return;
-    }
-    grid.innerHTML = lista.map(m => `
-      <div class="card" onclick="abrirModal(${m.id})">
-        <img src="${m.portada_url || ''}" alt="${m.titulo}" onerror="this.src='https://via.placeholder.com/180x240/1a1a1a/e94560?text=Sin+portada'"/>
-        <div class="card-info">
-          <h3>${m.titulo}</h3>
-          <p>${m.autor || 'Autor desconocido'}</p>
-          <span class="badge ${m.estado}">${m.estado === 'en_curso' ? 'En curso' : 'Finalizado'}</span>
-          <span class="genero-tag">${m.genero || ''}</span>
-        </div>
+function renderStats(){const f=mangas.filter(m=>m.estado==='finalizado').length,c=mangas.filter(m=>m.estado==='en_curso').length;document.getElementById('statsRow').innerHTML=`<div class="stat"><div class="num">${mangas.length}</div><div class="lbl">Títulos</div></div><div class="stat"><div class="num">${c}</div><div class="lbl">En curso</div></div><div class="stat"><div class="num">${f}</div><div class="lbl">Finalizados</div></div>`;}
+function renderFilters(){
+  const row=document.getElementById('filtersRow');
+  const todosLosTemas=new Set();
+  mangas.forEach(m=>{const ex=MANGA_EXTRA[m.id];if(ex&&ex.temas)ex.temas.forEach(t=>todosLosTemas.add(t));});
+  const btn=document.createElement('button');
+  btn.className='fbtn active';
+  btn.textContent='Todos';
+  btn.onclick=function(){filterByGenre('todos',this);};
+  row.innerHTML='';
+  row.appendChild(btn);
+  [...todosLosTemas].sort().forEach(x=>{
+    const b=document.createElement('button');
+    b.className='fbtn';
+    b.textContent=x;
+    b.onclick=function(){filterByGenre(x,this);};
+    row.appendChild(b);
+  });
+}
+function filterByGenre(g,btn){currentGenre=g;document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');filterMangas();}
+function filterMangas(){const q=(document.getElementById('searchInput').value||'').toLowerCase();let l=mangas;if(currentGenre!=='todos')l=l.filter(m=>m.genero===currentGenre);if(q)l=l.filter(m=>m.titulo.toLowerCase().includes(q)||(m.autor||'').toLowerCase().includes(q));document.getElementById('sectionTitle').textContent='Catálogo ('+l.length+' títulos)';renderGrid(l);}
+function renderGrid(list){const g=document.getElementById('mangaGrid');if(!list.length){g.innerHTML='<div class="empty">No se encontraron resultados</div>';return;}g.innerHTML=list.map(m=>`<div class="card" onclick="openManga(${m.id})"><img src="${m.portada_url||''}" alt="${m.titulo}" onerror="this.src='https://via.placeholder.com/160x220/1a1a1a/e94560?text=Sin+portada'"/><div class="card-info"><h3>${m.titulo}</h3><p>${m.autor||'Autor desconocido'}</p><span class="badge ${m.estado}">${m.estado==='en_curso'?'En curso':'Finalizado'}</span><span class="genre-tag">${m.genero||''}</span></div></div>`).join('');}
+
+
+const MANGA_EXTRA = {
+  1: { score:'7.97', ranked:'#55', popularidad:'#8', miembros:'290,000', volumen:'72', tipo:'Manga', demografia:'Shounen', serializado:'Weekly Shounen Jump', publicado:'Sep 1999 - Nov 2014',
+    temas:['Accion','Aventura','Artes Marciales','Ninjas','Fantasia','Poderes Sobrenaturales','Comedia','Shounen'],
+    otrasObras:[
+      {titulo:'Karakuri (one-shot)',anio:'1995'},
+      {titulo:'Masashi Kishimoto Debut! (one-shot)',anio:'1996'},
+      {titulo:'Mario (one-shot)',anio:'1997'},
+      {titulo:'Naruto Pilot (one-shot)',anio:'1997'},
+      {titulo:'Samurai 8: Hachimaruden',anio:'2019'},
+      {titulo:'Boruto: Naruto Next Generations (diseno de personajes)',anio:'2016'}
+    ]},
+  2: { score:'9.18', ranked:'#1', popularidad:'#1', miembros:'480,000', volumen:'108+', tipo:'Manga', demografia:'Shounen', serializado:'Weekly Shounen Jump', publicado:'Jul 1997 - Presente',
+    temas:['Accion','Aventura','Comedia','Drama','Fantasia','Piratas','Poderes Sobrenaturales','Shounen'],
+    otrasObras:[
+      {titulo:'Wanted! (one-shot)',anio:'1992'},
+      {titulo:'Romance Dawn v1 (one-shot)',anio:'1996'},
+      {titulo:'Romance Dawn v2 (one-shot)',anio:'1996'},
+      {titulo:'One Piece - Aces Story (supervision)',anio:'2009'},
+      {titulo:'Monsters (one-shot)',anio:'1994'}
+    ]},
+  3: { score:'8.56', ranked:'#126', popularidad:'#4', miembros:'695,400', volumen:'34', tipo:'Manga', demografia:'Shounen', serializado:'Bessatsu Shounen Magazine', publicado:'Sep 2009 - Apr 2021',
+    temas:['Accion','Drama','Fantasia','Gore','Horror','Misterio','Militar','Shounen','Supervivencia','Thriller'],
+    otrasObras:[
+      {titulo:'Bad Girl (one-shot)',anio:'2006'},
+      {titulo:'Shingeki no Kyojin: No Regrets (supervision)',anio:'2013'},
+      {titulo:'Shingeki no Kyojin: Before the Fall (supervision)',anio:'2013'},
+      {titulo:'Shingeki no Kyojin: Lost Girls (supervision)',anio:'2015'},
+      {titulo:'Shingeki no Kyojin: Junior High (supervision)',anio:'2012'}
+    ]},
+  4: { score:'8.71', ranked:'#67', popularidad:'#2', miembros:'320,000', volumen:'12', tipo:'Manga', demografia:'Shounen', serializado:'Weekly Shounen Jump', publicado:'Dic 2003 - May 2006',
+    temas:['Misterio','Psicologico','Sobrenatural','Thriller','Shounen','Drama','Suspense'],
+    otrasObras:[
+      {titulo:'Bokurano (escritor)',anio:'2003'},
+      {titulo:'Platinum End',anio:'2015'},
+      {titulo:'Death Note One-Shot (2020)',anio:'2020'}
+    ]},
+  5: { score:'8.72', ranked:'#60', popularidad:'#3', miembros:'410,000', volumen:'42', tipo:'Manga', demografia:'Shounen', serializado:'Weekly Shounen Jump', publicado:'Nov 1984 - May 1995',
+    temas:['Accion','Aventura','Comedia','Fantasia','Artes Marciales','Poderes Sobrenaturales','Shounen'],
+    otrasObras:[
+      {titulo:'Dr. Slump',anio:'1980'},
+      {titulo:'Jaco the Galactic Patrolman',anio:'2013'},
+      {titulo:'Dragon Ball Super (historia original)',anio:'2015'}
+    ]},
+  6: { score:'8.54', ranked:'#138', popularidad:'#5', miembros:'280,000', volumen:'23', tipo:'Manga', demografia:'Shounen', serializado:'Weekly Shounen Jump', publicado:'Feb 2016 - May 2020',
+    temas:['Accion','Fantasia','Historico','Shounen','Sobrenatural','Demonios','Artes Marciales'],
+    otrasObras:[
+      {titulo:'Haeniwa no Zigzag (one-shot)',anio:'2013'},
+      {titulo:'Kagarigabi (one-shot)',anio:'2014'}
+    ]},
+  7: { score:'7.87', ranked:'#220', popularidad:'#6', miembros:'260,000', volumen:'40+', tipo:'Manga', demografia:'Shounen', serializado:'Weekly Shounen Jump', publicado:'Jul 2014 - Presente',
+    temas:['Accion','Comedia','Escolar','Shounen','Superpoderes','Aventura','Drama'],
+    otrasObras:[
+      {titulo:'Kimi no Koto ga Daidaidaidaidaisuki na 100-nin no Kanojo',anio:'2021'},
+      {titulo:'My Hero Academia: Vigilantes (supervision)',anio:'2016'}
+    ]},
+  8: { score:'9.11', ranked:'#3', popularidad:'#7', miembros:'370,000', volumen:'27', tipo:'Manga', demografia:'Shounen', serializado:'Monthly Shounen Gangan', publicado:'Jul 2001 - Jun 2010',
+    temas:['Accion','Aventura','Drama','Fantasia','Militar','Shounen','Comedia'],
+    otrasObras:[
+      {titulo:'Stray Dog (one-shot)',anio:'1999'},
+      {titulo:'Shanghai Requiem (one-shot)',anio:'2002'},
+      {titulo:'Fullmetal Alchemist: The Valley of the White Petals (novela)',anio:'2004'}
+    ]}
+};
+async function openManga(id){
+  try{
+    const[mRes,cRes]=await Promise.all([fetch(`${API}/mangas/${id}`),fetch(`${API}/capitulos/manga/${id}`)]);
+    const manga=await mRes.json(),chapters=await cRes.json();
+    const u=JSON.parse(localStorage.getItem('user')||'null');
+    const ex=MANGA_EXTRA[id]||{};
+    document.getElementById('detailContent').innerHTML=`
+      <div style="background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:12px;">
+        <button class="btn-out" onclick="goHome()" style="padding:6px 14px;font-size:13px;">← Volver</button>
+        <span style="color:var(--txt2);font-size:13px;">${manga.genero||''} › ${manga.titulo}</span>
       </div>
-    `).join('');
-  }
+      <div style="display:flex;gap:0;max-width:1100px;margin:0 auto;padding:28px 20px;flex-wrap:wrap;">
 
-  function abrirModal(id) {
-    const m = mangas.find(x => x.id === id);
-    if (!m) return;
-    document.getElementById('modal-content').innerHTML = `
-      <img src="${m.portada_url || ''}" alt="${m.titulo}" onerror="this.src='https://via.placeholder.com/500x280/1a1a1a/e94560?text=${m.titulo}'"/>
-      <div class="modal-body">
-        <h2>${m.titulo}</h2>
-        <div class="autor">por ${m.autor || 'Autor desconocido'} · ${m.genero || ''}</div>
-        <p>${m.sinopsis || 'Sin sinopsis disponible.'}</p>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" onclick="cerrarModal()">Cerrar</button>
-          <button class="btn btn-primary">Leer ahora</button>
+        <!-- Columna izquierda -->
+        <div style="width:220px;min-width:180px;margin-right:32px;flex-shrink:0;">
+          <img src="${manga.portada_url||''}" alt="${manga.titulo}" onerror="this.onerror=null;this.style.background='#222'" style="width:100%;border-radius:6px;box-shadow:0 4px 20px rgba(0,0,0,.5);margin-bottom:14px;"/>
+          ${chapters.length?`<button class="btn-acc" style="width:100%;margin-bottom:8px;" onclick="openChapter(${chapters[0].id},'${manga.titulo}',1)">▶ Leer ahora</button>`:''}
+          ${u?`<button class="btn-out" style="width:100%;margin-bottom:8px;" onclick="toggleFav(${manga.id})">♥ Agregar a favoritos</button>`:''}
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:8px;">
+            <div style="font-size:12px;font-weight:700;color:var(--txt2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">Información</div>
+            ${[
+              ['Tipo', ex.tipo||'Manga'],
+              ['Volúmenes', ex.volumen||'—'],
+              ['Capítulos', ex.volumen?chapters.length+' (demo)':'—'],
+              ['Estado', manga.estado==='en_curso'?'En curso':'Finalizado'],
+              ['Publicado', ex.publicado||'—'],
+              ['Serializado', ex.serializado||'—'],
+              ['Demografía', ex.demografia||'—'],
+              ['Género', manga.genero||'—'],
+            ].map(([l,v])=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:var(--txt2);">${l}</span><span style="font-weight:500;text-align:right;max-width:120px;">${v}</span></div>`).join('')}
+          </div>
         </div>
-      </div>
-    `;
-    document.getElementById('modal').classList.add('open');
-  }
 
-  function cerrarModal(e) {
-    if (!e || e.target === document.getElementById('modal')) {
-      document.getElementById('modal').classList.remove('open');
-    }
-  }
+        <!-- Columna derecha -->
+        <div style="flex:1;min-width:280px;">
+          <h1 style="font-size:26px;margin-bottom:4px;">${manga.titulo}</h1>
+          <div style="color:var(--txt2);font-size:14px;margin-bottom:16px;">por <strong style="color:var(--txt);">${manga.autor||'Desconocido'}</strong></div>
+
+          <!-- Estadísticas -->
+          ${ex.score?`<div style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;">
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 20px;text-align:center;">
+              <div style="font-size:22px;font-weight:700;color:var(--acc);">${ex.score}</div>
+              <div style="font-size:11px;color:var(--txt2);">SCORE</div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 20px;text-align:center;">
+              <div style="font-size:18px;font-weight:700;">${ex.ranked}</div>
+              <div style="font-size:11px;color:var(--txt2);">RANKED</div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 20px;text-align:center;">
+              <div style="font-size:18px;font-weight:700;">${ex.popularidad}</div>
+              <div style="font-size:11px;color:var(--txt2);">POPULARIDAD</div>
+            </div>
+            <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 20px;text-align:center;">
+              <div style="font-size:18px;font-weight:700;">${ex.miembros}</div>
+              <div style="font-size:11px;color:var(--txt2);">MIEMBROS</div>
+            </div>
+          </div>`:''}
+
+          <!-- Temas -->
+          ${ex.temas?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;">${ex.temas.map(t=>`<span style="background:rgba(233,69,96,.15);color:var(--acc);padding:3px 12px;border-radius:20px;font-size:12px;border:1px solid rgba(233,69,96,.3);">${t}</span>`).join('')}</div>`:''}
+
+          <!-- Sinopsis -->
+          <div style="margin-bottom:24px;">
+            <h2 style="font-size:15px;color:var(--txt2);margin-bottom:10px;border-left:3px solid var(--acc);padding-left:10px;">Sinopsis</h2>
+            <p style="font-size:14px;line-height:1.8;color:var(--txt2);">${manga.sinopsis||'Sin sinopsis disponible.'}</p>
+          </div>
+
+          <!-- Otras obras del autor -->
+          ${ex.otrasObras?`<div style="margin-bottom:24px;">
+            <h2 style="font-size:15px;color:var(--txt2);margin-bottom:10px;border-left:3px solid var(--acc);padding-left:10px;">Otras obras de ${manga.autor}</h2>
+            ${ex.otrasObras.map(o=>`<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+              <div style="width:40px;height:56px;background:var(--bg4);border-radius:4px;display:flex;align-items:center;justify-content:center;color:var(--txt3);font-size:10px;flex-shrink:0;">📚</div>
+              <div><div style="font-size:13px;font-weight:500;">${o.titulo}</div><div style="font-size:12px;color:var(--txt2);">${o.anio} · ${ex.tipo||'Manga'}</div></div>
+            </div>`).join('')}
+          </div>`:''}
+
+          <!-- Lista de capítulos -->
+          <div>
+            <h2 style="font-size:15px;color:var(--txt2);margin-bottom:10px;border-left:3px solid var(--acc);padding-left:10px;">Capítulos disponibles (${chapters.length})</h2>
+            ${chapters.length?chapters.map(c=>`<div class="chapter-item" onclick="openChapter(${c.id},'${manga.titulo}',${c.numero})"><div><div class="chapter-num">Capítulo ${c.numero}</div><div class="chapter-title">${c.titulo||''}</div></div><div class="chapter-arrow">›</div></div>`).join(''):'<div class="empty" style="padding:20px">No hay capítulos disponibles aún</div>'}
+          </div>
+        </div>
+      </div>`;
+    showPage('detailPage');
+  }catch{toast('Error al cargar el manga');}
+}
+
+async function toggleFav(id){const t=getToken();if(!t){showPage('authPage');return;}try{await fetch(`${API}/usuarios/favoritos/${id}`,{method:'POST',headers:{'Authorization':'Bearer '+t}});toast('Agregado a favoritos ♥');}catch{toast('Error al guardar favorito');}}
+
+async function openChapter(id,title,num){
+  try{const res=await fetch(`${API}/capitulos/${id}`);currentChapter=await res.json();currentPage=0;renderReader(title,num);showPage('readerPage');}
+  catch{toast('Error al cargar el capítulo');}
+}
+
+function renderReader(title,num){
+  const pages=currentChapter.paginas||[];
+  document.getElementById('readerContent').innerHTML=`
+    <div class="reader-header">
+      <button class="back-btn" onclick="history.back()">‹</button>
+      <div><h2>${title}</h2><div class="chap">Capítulo ${num}${currentChapter.titulo?' — '+currentChapter.titulo:''}</div></div>
+    </div>
+    <div class="reader-body">
+      <div class="reader-click-zones"><div class="zone-left" onclick="prevPage()"></div><div class="zone-right" onclick="nextPage()"></div></div>
+      <div class="reader-page" id="readerImg">
+        ${pages.length?`<div id="pageBox" style="width:100%;max-width:800px;min-height:500px;background:#1a1a1a;display:flex;align-items:center;justify-content:center;border-radius:8px;"><span style="color:#555;font-size:18px">Página ${currentPage+1} de ${pages.length}</span></div>`:`<div class="no-pages"><div style="font-size:48px;margin-bottom:16px">📖</div><p>Este capítulo no tiene páginas cargadas aún</p></div>`}
+      </div>
+    </div>
+    <div class="reader-nav">
+      <button id="prevBtn" onclick="prevPage()" ${currentPage===0?'disabled':''}>← Anterior</button>
+      <div class="page-counter" id="pageCounter">${pages.length?`${currentPage+1} / ${pages.length}`:'—'}</div>
+      <button id="nextBtn" onclick="nextPage()" ${currentPage>=pages.length-1?'disabled':''}>Siguiente →</button>
+    </div>`;
+}
+
+function prevPage(){if(currentPage>0){currentPage--;updateReaderPage();}}
+function nextPage(){const p=currentChapter.paginas||[];if(currentPage<p.length-1){currentPage++;updateReaderPage();saveProgress();}}
+function updateReaderPage(){
+  const p=currentChapter.paginas||[];
+  const img=document.querySelector('#readerImg img');
+  if(img)img.src=p[currentPage];
+  document.getElementById('pageCounter').textContent=(currentPage+1)+' / '+p.length;
+  document.getElementById('prevBtn').disabled=currentPage===0;
+  document.getElementById('nextBtn').disabled=currentPage>=p.length-1;
+  window.scrollTo(0,0);
+}
+async function saveProgress(){const t=getToken();if(!t||!currentChapter)return;try{await fetch(`${API}/capitulos/${currentChapter.id}/progreso`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify({pagina:currentPage+1})});}catch{}}
+
+async function showProfile(){const t=getToken();if(!t){showPage('authPage');return;}try{const res=await fetch(`${API}/usuarios/perfil`,{headers:{'Authorization':'Bearer '+t}});const u=await res.json();document.getElementById('profileContent').innerHTML=`<div class="profile-field"><span class="lbl">Nombre</span><span>${u.nombre}</span></div><div class="profile-field"><span class="lbl">Correo</span><span>${u.correo}</span></div><div class="profile-field"><span class="lbl">Miembro desde</span><span>${new Date(u.fecha_registro).toLocaleDateString('es-MX')}</span></div><br/><button class="btn-acc" onclick="logout()">Cerrar sesión</button>`;showPage('profilePage');}catch{toast('Error al cargar perfil');}}
+
+async function showFavs(){const t=getToken();if(!t){showPage('authPage');return;}showPage('favsPage');try{const res=await fetch(`${API}/usuarios/favoritos`,{headers:{'Authorization':'Bearer '+t}});const f=await res.json();const g=document.getElementById('favsGrid');if(!f.length){g.innerHTML='<div class="empty">No tienes favoritos aún</div>';return;}g.innerHTML=f.map(m=>`<div class="card" onclick="openManga(${m.id})"><img src="${m.portada_url||''}" alt="${m.titulo}" onerror="this.src='https://via.placeholder.com/160x220/1a1a1a/e94560?text=Sin+portada'"/><div class="card-info"><h3>${m.titulo}</h3><p>${m.autor||''}</p><span class="badge ${m.estado}">${m.estado==='en_curso'?'En curso':'Finalizado'}</span></div></div>`).join('');}catch{document.getElementById('favsGrid').innerHTML='<div class="empty">Error al cargar favoritos</div>';}}
+
+document.addEventListener('keydown',e=>{if(!document.getElementById('readerPage').classList.contains('active'))return;if(e.key==='ArrowLeft')prevPage();if(e.key==='ArrowRight')nextPage();});
+updateNav();loadCatalog();
 </script>
 </body>
 </html>
