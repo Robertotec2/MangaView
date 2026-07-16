@@ -52,3 +52,48 @@ requiredEnvVars.forEach(v => {
 ```
 
 En ASP.NET Core, separar la configuracion en `appsettings.Development.json` y `appsettings.Production.json`, y usar **User Secrets** para desarrollo local. Agregar `.env` y `appsettings.*.json` al `.gitignore` y documentar las variables requeridas en el README.
+
+---
+
+## Deuda Tecnica 2 — Arquitectura y Codigo: Logica de negocio en los controladores
+
+### Que es
+
+En `backend/src/controllers/usuario.controller.js` de MangaView, el controlador mezcla tres responsabilidades distintas en una sola funcion: validacion de entrada, logica de negocio (hashing de contrasena, generacion de JWT) y acceso a datos (consulta SQL directa):
+
+```javascript
+const registro = async (req, res) => {
+  const { nombre, correo, password } = req.body;
+  const hash = await bcrypt.hash(password, 10);           // logica de negocio
+  const { rows } = await pool.query(                       // acceso a datos
+    'INSERT INTO usuarios (nombre, correo, password_hash) VALUES ($1, $2, $3) RETURNING id, nombre, correo',
+    [nombre, correo, hash]
+  );
+  res.status(201).json(rows[0]);                           // presentacion
+};
+```
+
+Lo mismo ocurre en CitasApp, donde los metodos de los controladores MVC contienen validaciones de reglas de negocio, consultas directas al contexto de Entity Framework y construccion de ViewModels, todo en el mismo bloque de codigo.
+
+### Por que existe
+
+No se implemento una capa de servicios desde el inicio porque el alcance del proyecto parecia pequeno y agregar capas adicionales se percibia como complejidad innecesaria para una entrega academica. Fue un descuido de diseno que no se detecto hasta que los controladores comenzaron a crecer.
+
+### Costo de no pagarla
+
+A medida que el sistema crece, los controladores se vuelven imposibles de probar de forma unitaria porque mezclan HTTP, logica y base de datos. Cambiar el proveedor de base de datos o la libreria de autenticacion implica modificar directamente los controladores en lugar de solo cambiar la implementacion subyacente. En CitasApp, reutilizar la logica de validacion de citas en otro contexto (por ejemplo, una API REST adicional) requeriria duplicar codigo o copiar metodos entre controladores.
+
+### Propuesta de solucion
+
+Aplicar el patron **Service Layer** extrayendo la logica de negocio a una clase de servicio independiente, y el patron **Repository** para separar el acceso a datos:
+
+```
+controllers/
+  usuario.controller.js   <- solo maneja HTTP (req/res)
+services/
+  usuario.service.js      <- logica de negocio (hash, JWT)
+repositories/
+  usuario.repository.js   <- consultas SQL
+```
+
+En CitasApp, implementar la interfaz `IRepository<T>` con Entity Framework y registrar los servicios mediante inyeccion de dependencias en `Program.cs`. Esto permite probar la logica de negocio de forma unitaria sin necesidad de una base de datos real.
