@@ -97,3 +97,10 @@ repositories/
 ```
 
 En CitasApp, implementar la interfaz `IRepository<T>` con Entity Framework y registrar los servicios mediante inyeccion de dependencias en `Program.cs`. Esto permite probar la logica de negocio de forma unitaria sin necesidad de una base de datos real.
+
+---
+
+## Declaracion de uso de IA
+
+Para la elaboracion de este documento se utilizo IA (Claude de Anthropic) como herramienta de asistencia en la estructuracion, redaccion y propuesta de soluciones tecnicas. Los escenarios descritos corresponden a situaciones reales identificadas en los proyectos MangaView y CitasApp desarrollados durante el cuatrimestre. El contenido fue revisado y validado por el autor antes de su entrega.
+
