@@ -39,6 +39,12 @@ function credenciales(base) {
 }
 
 async function asegurarBaseDeDatos() {
+  // En hosting gestionado (Neon, Render, Railway) la base ya existe y no hay
+  // permiso para CREATE DATABASE contra la base de mantenimiento.
+  if (process.env.DATABASE_URL) {
+    return false;
+  }
+
   const nombre = process.env.DB_NAME || 'mangaview';
   const cliente = new Client(credenciales(BASE_DE_MANTENIMIENTO));
 

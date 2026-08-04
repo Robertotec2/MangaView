@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="560" viewBox="0 0 400 560">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2a1200"/>
+      <stop offset="55%" stop-color="#FF8C00"/>
+      <stop offset="100%" stop-color="#2a1200"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.35" r="0.55">
+      <stop offset="0%" stop-color="#FFD700" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#2a1200" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="band" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#FFD700" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#FFD700" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#FFD700" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="560" fill="url(#sky)"/>
+  <rect width="400" height="560" fill="url(#glow)"/>
+  
+      <path d="M0 260 Q100 220 200 260 T400 260 V400 H0 Z" fill="#FFD700" opacity="0.14"/>
+      <path d="M0 300 Q100 270 200 300 T400 300 V400 H0 Z" fill="#FFD700" opacity="0.1"/>
+  <circle cx="200" cy="190" r="78" fill="#2a1200" opacity="0.45"/>
+  <circle cx="200" cy="190" r="64" fill="none" stroke="#FFD700" stroke-width="3" opacity="0.85"/>
+  <text x="200" y="218" font-family="Georgia, 'Times New Roman', serif" font-size="84" font-weight="700" fill="#FFD700" text-anchor="middle" opacity="0.95">D</text>
+  <rect x="40" y="400" width="320" height="2" fill="url(#band)"/>
+  <rect x="0" y="420" width="400" height="140" fill="#2a1200" opacity="0.72"/>
+  <text x="200" y="455" font-family="Georgia, 'Times New Roman', serif" font-size="22" font-weight="700" fill="#ffffff" text-anchor="middle">Dragon Ball</text>
+  <text x="200" y="540" font-family="Arial, sans-serif" font-size="11" letter-spacing="3" fill="#FFD700" text-anchor="middle">MANGAVIEW</text>
+  <title>Dragon Ball</title>
+</svg>

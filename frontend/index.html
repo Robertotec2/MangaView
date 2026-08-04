@@ -4,147 +4,345 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MangaView</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet"/>
   <style>
-    :root{--bg:#0d0d0d;--bg2:#111;--bg3:#1a1a1a;--bg4:#222;--acc:#e94560;--teal:#0f3460;--nav:#1a1a2e;--txt:#f0f0f0;--txt2:#aaa;--txt3:#555;--border:#2a2a2a;--card:#161616;}
-    .light{--bg:#f5f5f5;--bg2:#fff;--bg3:#eee;--bg4:#ddd;--txt:#111;--txt2:#555;--txt3:#999;--border:#ccc;--card:#fff;}
+    :root{
+      --ink:#1c1410;--ink2:#3d2f28;--washi:#f3ebe0;--washi2:#ebe0d0;--panel:#fffaf3;
+      --acc:#c0392b;--acc2:#8e1f16;--gold:#b0893d;--ok:#2f6b4f;--warn:#a66b1f;
+      --bg:var(--washi);--bg2:var(--panel);--bg3:#e7ddd0;--bg4:#ddd0be;
+      --txt:var(--ink);--txt2:#5c4a3d;--txt3:#8a7360;--border:#c9b8a2;--card:var(--panel);
+      --nav-bg:rgba(255,250,243,.92);--hero-ink:#211812;--shadow:rgba(28,20,16,.12);
+      --font:"Zen Kaku Gothic New",sans-serif;--display:"Dela Gothic One",sans-serif;
+      --tone:radial-gradient(circle at 1px 1px,rgba(28,20,16,.07) 1px,transparent 0);
+    }
+    body.night{
+      --ink:#efe6d8;--ink2:#d4c4ae;--washi:#14100e;--washi2:#1c1612;--panel:#221c17;
+      --acc:#e85d4c;--acc2:#ff8a7a;--gold:#d4a85a;--ok:#6fbf93;--warn:#e0a45a;
+      --bg:#14100e;--bg2:#1c1612;--bg3:#2a221c;--bg4:#362c24;
+      --txt:#efe6d8;--txt2:#b9a48c;--txt3:#7d6a56;--border:#3d3228;--card:#221c17;
+      --nav-bg:rgba(20,16,14,.94);--hero-ink:#0e0b09;--shadow:rgba(0,0,0,.45);
+      --tone:radial-gradient(circle at 1px 1px,rgba(239,230,216,.05) 1px,transparent 0);
+    }
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;transition:background .2s,color .2s;}
-    nav{background:var(--bg2);border-bottom:3px solid var(--acc);padding:14px 32px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100;}
-    .logo{font-size:22px;font-weight:700;cursor:pointer;}.logo span{color:var(--acc);}
-    .nav-links{display:flex;gap:10px;margin-left:auto;align-items:center;}
-    .nav-btn{background:none;border:none;color:var(--txt2);font-size:13px;cursor:pointer;padding:6px 12px;border-radius:6px;transition:all .2s;}
-    .nav-btn:hover{background:var(--bg3);color:var(--txt);}
-    .nav-btn.acc{background:var(--acc);color:#fff;}.nav-btn.acc:hover{opacity:.85;}
-    .theme-btn{font-size:18px;background:none;border:none;cursor:pointer;}
-    .page{display:none;}.page.active{display:block;}
+    body{
+      font-family:var(--font);background:var(--bg);color:var(--txt);min-height:100vh;
+      background-image:var(--tone),linear-gradient(180deg,var(--washi) 0%,var(--washi2) 100%);
+      background-size:14px 14px,auto;transition:background .25s,color .25s;
+    }
+    nav{
+      background:var(--nav-bg);backdrop-filter:blur(10px);border-bottom:3px solid var(--acc);
+      padding:12px 28px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;
+      box-shadow:0 1px 0 rgba(255,255,255,.25) inset;
+    }
+    .logo{
+      font-family:var(--display);font-size:26px;letter-spacing:.02em;cursor:pointer;line-height:1;
+      color:var(--ink);position:relative;
+    }
+    .logo span{color:var(--acc);}
+    .logo::after{
+      content:"漫画";position:absolute;left:0;top:-10px;font-size:10px;letter-spacing:.28em;
+      color:var(--gold);font-family:var(--font);font-weight:700;opacity:.85;
+    }
+    .nav-links{display:flex;gap:6px;margin-left:auto;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
+    .nav-btn{
+      background:transparent;border:1.5px solid transparent;color:var(--txt2);font-size:13px;
+      cursor:pointer;padding:7px 12px;border-radius:4px;transition:all .2s;font-family:inherit;font-weight:500;
+    }
+    .nav-btn:hover{border-color:var(--border);color:var(--txt);background:var(--bg3);}
+    .nav-btn.acc{background:var(--acc);border-color:var(--acc);color:#fff;}
+    .nav-btn.acc:hover{background:var(--acc2);border-color:var(--acc2);}
+    .theme-btn{
+      width:36px;height:36px;border:1.5px solid var(--border);border-radius:4px;background:var(--bg2);
+      color:var(--txt2);cursor:pointer;font-size:12px;font-weight:700;font-family:inherit;
+    }
+    .theme-btn:hover{border-color:var(--acc);color:var(--acc);}
+    .page{display:none;}.page.active{display:block;animation:pageIn .35s ease;}
+    @keyframes pageIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
     .auth-wrap{min-height:90vh;display:flex;align-items:center;justify-content:center;padding:20px;}
-    .auth-box{background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:40px;width:100%;max-width:420px;}
-    .auth-box h2{font-size:24px;margin-bottom:6px;}.auth-box p{color:var(--txt2);font-size:14px;margin-bottom:28px;}
-    .form-group{margin-bottom:16px;}.form-group label{display:block;font-size:13px;color:var(--txt2);margin-bottom:6px;}
-    .form-group input{width:100%;background:var(--bg4);border:1px solid var(--border);color:var(--txt);padding:10px 14px;border-radius:8px;font-size:14px;outline:none;transition:border .2s;}
-    .form-group input:focus{border-color:var(--acc);}
-    .btn-full{width:100%;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;transition:opacity .2s;}
-    .btn-full:hover{opacity:.85;}
-    .auth-switch{text-align:center;margin-top:18px;font-size:13px;color:var(--txt2);}.auth-switch a{color:var(--acc);cursor:pointer;}
-    .msg{padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:13px;display:none;}
-    .msg.error{background:#3a1520;color:#f56565;display:block;}.msg.success{background:#1a3a2a;color:#68d391;display:block;}
-    .home-hero{background:linear-gradient(135deg,var(--nav),var(--teal));padding:40px 32px 30px;}
-    .home-hero h1{font-size:32px;margin-bottom:8px;}.home-hero p{color:#aac;font-size:15px;}
-    .search-row{display:flex;gap:10px;margin-top:20px;}
-    .search-row input{flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;outline:none;}
-    .search-row input::placeholder{color:#aac;}
-    .stats-row{display:flex;gap:24px;padding:16px 32px;border-bottom:1px solid var(--border);}
-    .stat .num{font-size:22px;font-weight:700;color:var(--acc);}.stat .lbl{font-size:11px;color:var(--txt3);text-transform:uppercase;}
-    .filters{padding:14px 32px;display:flex;gap:8px;flex-wrap:wrap;}
-    .fbtn{background:var(--bg3);border:1px solid var(--border);color:var(--txt2);padding:5px 14px;border-radius:20px;cursor:pointer;font-size:12px;transition:all .2s;}
-    .fbtn.active,.fbtn:hover{background:var(--acc);border-color:var(--acc);color:#fff;}
-    .section{padding:24px 32px;}.section h2{font-size:15px;color:var(--txt2);margin-bottom:16px;border-left:3px solid var(--acc);padding-left:10px;}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:18px;}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:transform .2s,box-shadow .2s;}
-    .card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(233,69,96,.25);border-color:var(--acc);}
-    .card img{width:100%;height:220px;object-fit:cover;background:var(--bg4);}
-    .card-info{padding:10px;}.card-info h3{font-size:13px;font-weight:600;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .card-info p{font-size:11px;color:var(--txt2);margin-bottom:6px;}
-    .badge{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;}
-    .badge.finalizado{background:#1a3a2a;color:#4caf7d;}.badge.en_curso{background:#3a2a1a;color:#e9a046;}
-    .genre-tag{float:right;font-size:10px;color:var(--acc);background:#2a1520;padding:2px 7px;border-radius:10px;}
-    .empty{text-align:center;padding:60px;color:var(--txt3);}
-    .detail-hero{display:flex;gap:32px;padding:32px;background:linear-gradient(135deg,var(--nav),var(--teal));}
-    .detail-cover{width:200px;min-width:200px;height:280px;object-fit:cover;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);}
-    .detail-info h1{font-size:26px;margin-bottom:6px;}.detail-info .autor{color:#aac;font-size:14px;margin-bottom:12px;}
-    .detail-info .sinopsis{color:#ccc;font-size:14px;line-height:1.7;margin-bottom:16px;}
+    .auth-box{
+      background:var(--bg2);border:2px solid var(--ink);border-radius:6px;padding:36px;width:100%;max-width:420px;
+      box-shadow:6px 6px 0 var(--acc);
+    }
+    .auth-box h2{font-family:var(--display);font-size:28px;margin-bottom:6px;}
+    .auth-box p{color:var(--txt2);font-size:14px;margin-bottom:28px;}
+    .form-group{margin-bottom:16px;}
+    .form-group label{display:block;font-size:12px;color:var(--txt2);margin-bottom:6px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;}
+    .form-group input{
+      width:100%;background:var(--bg);border:1.5px solid var(--border);color:var(--txt);
+      padding:11px 14px;border-radius:4px;font-size:14px;outline:none;font-family:inherit;
+    }
+    .form-group input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(192,57,43,.15);}
+    .btn-full,.btn-acc{
+      background:var(--acc);color:#fff;border:2px solid var(--ink);padding:11px 20px;border-radius:4px;
+      font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:.02em;
+      box-shadow:3px 3px 0 var(--ink);transition:transform .15s,box-shadow .15s;
+    }
+    .btn-full{width:100%;margin-top:8px;}
+    .btn-full:hover,.btn-acc:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink);}
+    .btn-out{
+      background:var(--bg2);color:var(--txt);border:2px solid var(--ink);padding:11px 20px;border-radius:4px;
+      font-size:14px;cursor:pointer;font-family:inherit;font-weight:600;box-shadow:3px 3px 0 var(--border);
+      transition:transform .15s,box-shadow .15s;
+    }
+    .btn-out:hover{transform:translate(-1px,-1px);border-color:var(--acc);color:var(--acc);}
+    .auth-switch{text-align:center;margin-top:18px;font-size:13px;color:var(--txt2);}
+    .auth-switch a{color:var(--acc);cursor:pointer;font-weight:700;}
+    .msg{padding:10px 14px;border-radius:4px;margin-bottom:14px;font-size:13px;display:none;border:1.5px solid;}
+    .msg.error{background:#f8e4e1;color:#8e1f16;border-color:#c0392b;display:block;}
+    .msg.success{background:#e4f3ea;color:#2f6b4f;border-color:#2f6b4f;display:block;}
+    body.night .msg.error{background:#3a1c18;color:#ffb4a8;}
+    body.night .msg.success{background:#1a3326;color:#9be0b8;}
+
+    .home-hero,.catalog-hero,.detail-hero{
+      position:relative;overflow:hidden;color:#f7efe4;
+      background:
+        linear-gradient(115deg,rgba(33,24,18,.92) 0%,rgba(33,24,18,.55) 48%,rgba(192,57,43,.35) 100%),
+        repeating-linear-gradient(-18deg,transparent,transparent 18px,rgba(255,255,255,.03) 18px,rgba(255,255,255,.03) 19px),
+        radial-gradient(ellipse at 80% 20%,#c0392b 0%,transparent 45%),
+        var(--hero-ink);
+    }
+    .home-hero{padding:56px 32px 48px;min-height:42vh;display:flex;flex-direction:column;justify-content:flex-end;}
+    .home-hero .brand-mark{
+      font-family:var(--display);font-size:clamp(48px,10vw,92px);line-height:.95;margin-bottom:10px;
+      text-shadow:4px 4px 0 rgba(0,0,0,.35);animation:rise .6s ease;
+    }
+    .home-hero .brand-mark span{color:#ff6b5a;}
+    .home-hero h1{font-size:clamp(18px,2.4vw,26px);font-weight:700;margin-bottom:8px;max-width:560px;animation:rise .7s ease;}
+    .home-hero p{color:#e2d3c0;font-size:15px;max-width:480px;line-height:1.6;animation:rise .8s ease;}
+    .home-hero .hero-actions{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;animation:rise .9s ease;}
+    .home-hero .btn-acc,.home-hero .btn-out{border-color:#1c1410;}
+    .home-hero .btn-out{background:rgba(255,250,243,.12);color:#fff;border-color:#f3ebe0;}
+    .home-hero .btn-out:hover{background:rgba(255,250,243,.22);color:#fff;border-color:#fff;}
+    .home-hero::before,.catalog-hero::before{
+      content:"";position:absolute;inset:auto -10% -40% auto;width:55%;height:120%;
+      background:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(255,255,255,.04) 10px,rgba(255,255,255,.04) 12px);
+      transform:rotate(18deg);pointer-events:none;
+    }
+    @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+    .catalog-hero{padding:40px 32px 30px;}
+    .catalog-hero h1,.favs-wrap h1,.foro-head h1,.privacy-wrap h1{
+      font-family:var(--display);font-size:clamp(28px,4vw,40px);margin-bottom:8px;letter-spacing:.01em;
+    }
+    .catalog-hero p,.foro-head p{color:#e2d3c0;font-size:14px;margin-bottom:18px;}
+    .catalog-bar{display:flex;gap:10px;flex-wrap:wrap;position:relative;z-index:1;}
+    .catalog-bar input,.catalog-bar select,.foro-tools input,.foro-tools select{
+      flex:1;min-width:180px;background:rgba(255,250,243,.12);border:1.5px solid rgba(243,235,224,.35);
+      color:#fff;padding:11px 14px;border-radius:4px;font-size:14px;outline:none;font-family:inherit;
+    }
+    .catalog-bar input::placeholder{color:#cbb9a4;}
+    .catalog-bar select{flex:0 1 170px;cursor:pointer;}
+    .catalog-bar select option,.foro-tools select option{background:#221c17;color:#efe6d8;}
+    .stats-row{display:flex;gap:28px;padding:16px 32px;border-bottom:2px solid var(--border);background:var(--bg2);}
+    .stat .num{font-family:var(--display);font-size:26px;color:var(--acc);line-height:1;}
+    .stat .lbl{font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-top:4px;font-weight:700;}
+    .filters{
+      padding:18px 32px 22px;background:var(--bg2);border-bottom:1px solid var(--border);
+      display:flex;flex-direction:column;gap:12px;
+    }
+    .filters-head{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    }
+    .filters-label{
+      font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);
+    }
+    .filters-hint{font-size:12px;color:var(--txt3);}
+    .filters-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+    .filters-tools input{
+      min-width:200px;flex:1;max-width:280px;background:var(--bg);border:1.5px solid var(--border);
+      color:var(--txt);padding:9px 12px;border-radius:4px;font-size:13px;font-family:inherit;outline:none;
+    }
+    .filters-tools input:focus{border-color:var(--acc);}
+    .filters-clear{
+      background:transparent;border:1.5px solid var(--border);color:var(--txt2);padding:8px 12px;
+      border-radius:4px;cursor:pointer;font-size:12px;font-family:inherit;font-weight:700;
+    }
+    .filters-clear:hover{border-color:var(--acc);color:var(--acc);}
+    .filters-selected{display:flex;gap:8px;flex-wrap:wrap;min-height:0;}
+    .filters-selected:empty{display:none;}
+    .genre-pill{
+      display:inline-flex;align-items:center;gap:6px;background:rgba(192,57,43,.12);color:var(--acc);
+      border:1.5px solid rgba(192,57,43,.35);padding:5px 8px 5px 10px;border-radius:4px;
+      font-size:12px;font-weight:700;
+    }
+    .genre-pill button{
+      border:none;background:transparent;color:var(--acc);cursor:pointer;font-size:14px;line-height:1;padding:0 2px;font-family:inherit;
+    }
+    .filters-chips{
+      display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;
+      max-height:220px;overflow-y:auto;padding:4px 2px 2px;
+    }
+    .fbtn{
+      background:var(--bg);border:1.5px solid var(--border);color:var(--txt2);padding:10px 12px;
+      border-radius:4px;cursor:pointer;font-size:13px;transition:all .15s;font-family:inherit;font-weight:600;
+      text-align:left;display:flex;align-items:center;gap:8px;
+    }
+    .fbtn::before{
+      content:"";width:14px;height:14px;border:1.5px solid var(--border);border-radius:3px;flex:0 0 14px;background:var(--bg2);
+    }
+    .fbtn.active{background:rgba(192,57,43,.1);border-color:var(--acc);color:var(--acc);}
+    .fbtn.active::before{background:var(--acc);border-color:var(--ink);box-shadow:inset 0 0 0 2px var(--bg2);}
+    .fbtn:hover{border-color:var(--acc);}
+    .fbtn.hidden-genre{display:none;}
+    .tabs-row .fbtn{display:inline-flex;text-align:center;}
+    .tabs-row .fbtn::before{display:none;}
+    .tabs-row .fbtn.active{background:var(--acc);border-color:var(--ink);color:#fff;}
+    .section{padding:28px 32px 10px;}
+    .section h2,.chapters-section h2{
+      font-family:var(--display);font-size:22px;color:var(--txt);margin-bottom:4px;
+      border-left:5px solid var(--acc);padding-left:12px;letter-spacing:.01em;
+    }
+    .section .section-sub{font-size:13px;color:var(--txt3);margin:0 0 16px 17px;}
+    .section-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:4px;}
+    .section-head a,.linkish{color:var(--acc);font-size:13px;cursor:pointer;text-decoration:none;font-weight:700;}
+    .section-head a:hover,.linkish:hover{color:var(--acc2);}
+    .rail{display:flex;gap:16px;overflow-x:auto;padding:6px 2px 22px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;}
+    .rail::-webkit-scrollbar{height:7px;}
+    .rail::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+    .rail .card{min-width:152px;max-width:152px;flex:0 0 152px;scroll-snap-align:start;}
+    .rail .card img{height:210px;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:20px;}
+    .card{
+      background:var(--card);border:2px solid var(--ink);border-radius:4px;overflow:hidden;cursor:pointer;
+      transition:transform .18s,box-shadow .18s;box-shadow:3px 3px 0 var(--shadow);
+    }
+    .card:hover{transform:translate(-2px,-3px) rotate(-.4deg);box-shadow:6px 6px 0 var(--acc);}
+    .card img{width:100%;height:230px;object-fit:cover;background:var(--bg4);display:block;border-bottom:2px solid var(--ink);}
+    .card-info{padding:10px 11px 12px;}
+    .card-info h3{font-size:13px;font-weight:700;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .card-info p{font-size:11px;color:var(--txt2);margin-bottom:7px;}
+    .card-meta{font-size:10px;color:var(--txt3);margin-top:6px;clear:both;}
+    .badge{font-size:10px;padding:2px 7px;border-radius:3px;font-weight:700;border:1px solid transparent;}
+    .badge.finalizado{background:rgba(47,107,79,.12);color:var(--ok);border-color:rgba(47,107,79,.35);}
+    .badge.en_curso{background:rgba(166,107,31,.12);color:var(--warn);border-color:rgba(166,107,31,.35);}
+    .genre-tag{float:right;font-size:10px;color:var(--acc);background:rgba(192,57,43,.1);padding:2px 7px;border-radius:3px;font-weight:700;border:1px solid rgba(192,57,43,.25);}
+    .empty{text-align:center;padding:40px 20px;color:var(--txt3);font-size:13px;}
+    .empty.compact{padding:28px 12px;}
+
+    .detail-hero{display:flex;gap:32px;padding:36px 32px;}
+    .detail-cover,.detail-hero img{
+      width:200px;min-width:200px;height:280px;object-fit:cover;border-radius:4px;
+      border:3px solid #1c1410;box-shadow:8px 8px 0 rgba(0,0,0,.35);
+    }
+    .detail-info h1{font-family:var(--display);font-size:clamp(26px,4vw,36px);margin-bottom:6px;color:#fff;}
+    .detail-info .autor{color:#e2d3c0;font-size:14px;margin-bottom:12px;}
+    .detail-info .sinopsis{color:#ece1d2;font-size:14px;line-height:1.75;margin-bottom:16px;max-width:640px;}
     .detail-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
-    .tag{background:rgba(233,69,96,.2);color:var(--acc);padding:4px 12px;border-radius:20px;font-size:12px;}
+    .tag{background:rgba(255,255,255,.1);color:#ffd7d0;padding:4px 10px;border-radius:3px;font-size:12px;border:1px solid rgba(255,255,255,.2);font-weight:600;}
     .detail-actions{display:flex;gap:10px;flex-wrap:wrap;}
-    .btn-acc{background:var(--acc);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .2s;}
-    .btn-acc:hover{opacity:.85;}
-    .btn-out{background:none;color:var(--txt2);border:1px solid var(--border);padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer;transition:all .2s;}
-    .btn-out:hover{border-color:var(--acc);color:var(--acc);}
-    .chapters-section{padding:24px 32px;}.chapters-section h2{font-size:16px;margin-bottom:14px;color:var(--txt2);border-left:3px solid var(--acc);padding-left:10px;}
-    .chapter-item{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer;transition:all .2s;}
-    .chapter-item:hover{border-color:var(--acc);background:var(--bg3);}
-    .chapter-num{font-size:13px;font-weight:600;color:var(--acc);}.chapter-title{font-size:13px;color:var(--txt2);}.chapter-arrow{color:var(--txt3);font-size:18px;}
-    .reader-wrap{background:#000;min-height:100vh;display:flex;flex-direction:column;}
-    .reader-header{background:rgba(0,0,0,.9);padding:12px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #222;}
-    .reader-header h2{font-size:15px;color:#fff;}.reader-header .chap{font-size:13px;color:#888;}
-    .back-btn{background:none;border:none;color:#aaa;cursor:pointer;font-size:22px;line-height:1;}
+    .chapters-section{padding:24px 32px;}
+    .chapter-item{
+      display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:var(--card);
+      border:1.5px solid var(--border);border-radius:4px;margin-bottom:8px;cursor:pointer;transition:all .15s;
+    }
+    .chapter-item:hover{border-color:var(--acc);transform:translateX(3px);}
+    .chapter-num{font-size:13px;font-weight:700;color:var(--acc);}
+    .chapter-title{font-size:13px;color:var(--txt2);}.chapter-arrow{color:var(--txt3);font-size:18px;}
+
+    .reader-wrap{background:#0a0908;min-height:100vh;display:flex;flex-direction:column;}
+    .reader-header{background:rgba(20,16,14,.95);padding:12px 24px;display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--acc);}
+    .reader-header h2{font-size:15px;color:#efe6d8;font-family:var(--display);}
+    .reader-header .chap{font-size:13px;color:#b9a48c;}
+    .back-btn{background:none;border:none;color:#b9a48c;cursor:pointer;font-size:22px;line-height:1;}
     .reader-body{flex:1;display:flex;align-items:center;justify-content:center;position:relative;min-height:80vh;padding-bottom:70px;}
     .reader-page{max-width:800px;width:100%;}.reader-page img{width:100%;display:block;}
-    .no-pages{color:#555;text-align:center;padding:80px 20px;}
-    .reader-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,.9);padding:14px 24px;display:flex;align-items:center;justify-content:center;gap:20px;border-top:1px solid #222;}
-    .reader-nav button{background:var(--bg3);border:1px solid var(--border);color:var(--txt);padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;transition:all .2s;}
-    .reader-nav button:hover:not(:disabled){border-color:var(--acc);color:var(--acc);}
+    .no-pages{color:#7d6a56;text-align:center;padding:80px 20px;}
+    .reader-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(20,16,14,.95);padding:14px 24px;display:flex;align-items:center;justify-content:center;gap:20px;border-top:1px solid #3d3228;}
+    .reader-nav button{background:#221c17;border:1.5px solid #3d3228;color:#efe6d8;padding:10px 24px;border-radius:4px;cursor:pointer;font-size:14px;font-family:inherit;}
+    .reader-nav button:hover:not(:disabled){border-color:#e85d4c;color:#e85d4c;}
     .reader-nav button:disabled{opacity:.3;cursor:not-allowed;}
-    .page-counter{color:#aaa;font-size:14px;min-width:80px;text-align:center;}
+    .page-counter{color:#b9a48c;font-size:14px;min-width:80px;text-align:center;}
     .reader-click-zones{position:absolute;inset:0;display:flex;z-index:1;}
     .zone-left,.zone-right{flex:1;cursor:pointer;}
+
     .profile-wrap{max-width:700px;margin:40px auto;padding:0 24px;}
-    .profile-card{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:32px;margin-bottom:20px;}
-    .profile-card h2{font-size:18px;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:12px;}
+    .profile-card{background:var(--bg2);border:2px solid var(--ink);border-radius:6px;padding:32px;margin-bottom:20px;box-shadow:5px 5px 0 var(--shadow);}
+    .profile-card h2{font-family:var(--display);font-size:22px;margin-bottom:18px;border-bottom:2px solid var(--border);padding-bottom:12px;}
     .profile-field{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;}
     .profile-field .lbl{color:var(--txt2);}
     .privacy-wrap{max-width:800px;margin:40px auto;padding:0 32px 60px;}
-    .privacy-wrap h1{font-size:28px;margin-bottom:8px;}.privacy-wrap .date{color:var(--txt2);font-size:13px;margin-bottom:32px;}
-    .privacy-wrap h2{font-size:17px;margin:24px 0 10px;color:var(--acc);}
+    .privacy-wrap .date{color:var(--txt2);font-size:13px;margin-bottom:32px;}
+    .privacy-wrap h2{font-size:17px;margin:24px 0 10px;color:var(--acc);font-family:var(--display);}
     .privacy-wrap p{font-size:14px;line-height:1.8;color:var(--txt2);margin-bottom:10px;}
-    .favs-wrap{padding:24px 32px;}.favs-wrap h1{font-size:22px;margin-bottom:20px;}
-    .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border);color:var(--txt);padding:10px 20px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;}
+    .favs-wrap{padding:24px 32px;}
+    .toast{
+      position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--washi);
+      border:2px solid var(--acc);padding:10px 18px;border-radius:4px;font-size:13px;z-index:999;opacity:0;
+      transition:opacity .3s;pointer-events:none;font-weight:600;box-shadow:4px 4px 0 var(--acc);
+    }
     .toast.show{opacity:1;}
-    /* Foro */
+
     .foro-wrap{padding:24px 32px;max-width:1000px;margin:0 auto;}
-    .foro-head h1{font-size:24px;margin-bottom:6px;}
-    .foro-head p{font-size:13px;color:var(--txt2);margin-bottom:18px;}
     .foro-tools{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
-    .foro-tools input,.foro-tools select{padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--txt);font-size:13px;font-family:inherit;}
-    .foro-tools input{flex:1;min-width:220px;}
+    .foro-tools input,.foro-tools select{background:var(--bg2);border:1.5px solid var(--border);color:var(--txt);border-radius:4px;}
     .temas-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:22px;}
-    .tema-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:transform .2s,border-color .2s;}
-    .tema-card:hover{border-color:var(--acc);transform:translateY(-2px);}
-    .tema-card.active{border-color:var(--acc);background:var(--bg3);}
+    .tema-card,.post-item,.comment,.foro-form,.manga-cite,.aviso-item,.marcador-item{
+      background:var(--card);border:1.5px solid var(--border);border-radius:4px;
+    }
+    .tema-card{padding:12px 14px;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s;}
+    .tema-card:hover,.post-item:hover{border-color:var(--acc);transform:translateY(-2px);box-shadow:3px 3px 0 var(--shadow);}
+    .tema-card.active{border-color:var(--acc);background:var(--bg3);box-shadow:3px 3px 0 var(--acc);}
     .tema-card .ic{font-size:20px;}
-    .tema-card h4{font-size:13px;margin:6px 0 4px;}
+    .tema-card h4{font-size:13px;margin:6px 0 4px;font-weight:700;}
     .tema-card p{font-size:11px;color:var(--txt2);line-height:1.5;}
-    .tema-card .cnt{font-size:11px;color:var(--acc);margin-top:8px;}
-    .post-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color .2s;}
-    .post-item:hover{border-color:var(--acc);}
-    .post-item h3{font-size:15px;margin-bottom:6px;}
+    .tema-card .cnt{font-size:11px;color:var(--acc);margin-top:8px;font-weight:700;}
+    .post-item{padding:14px 16px;margin-bottom:10px;cursor:pointer;}
+    .post-item h3{font-size:15px;margin-bottom:6px;font-weight:700;}
     .post-item .excerpt{font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:10px;}
     .post-meta{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--txt3);align-items:center;}
-    .tema-badge{background:var(--bg4);color:var(--txt2);padding:3px 10px;border-radius:20px;font-size:11px;display:inline-block;}
+    .tema-badge{background:var(--bg3);color:var(--txt2);padding:3px 10px;border-radius:3px;font-size:11px;display:inline-block;border:1px solid var(--border);font-weight:600;}
     .post-detail{max-width:820px;margin:0 auto;padding:24px 32px;}
     .post-body{font-size:14px;line-height:1.9;margin:18px 0 4px;white-space:pre-wrap;}
-    .react-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:16px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin:18px 0 22px;}
-    .react-btn{background:var(--bg3);border:1px solid var(--border);color:var(--txt2);padding:8px 16px;border-radius:20px;cursor:pointer;font-size:13px;font-family:inherit;transition:all .2s;}
+    .react-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:16px 0;border-top:2px solid var(--border);border-bottom:2px solid var(--border);margin:18px 0 22px;}
+    .react-btn{
+      background:var(--bg2);border:1.5px solid var(--border);color:var(--txt2);padding:8px 14px;border-radius:4px;
+      cursor:pointer;font-size:13px;font-family:inherit;font-weight:600;transition:all .15s;
+    }
     .react-btn:hover{border-color:var(--acc);color:var(--txt);}
-    .react-btn.on{background:var(--acc);border-color:var(--acc);color:#fff;}
-    .comment{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:8px;}
-    .comment .who{font-size:12px;font-weight:600;margin-bottom:5px;}
+    .react-btn.on{background:var(--acc);border-color:var(--ink);color:#fff;}
+    .comment{padding:12px 14px;margin-bottom:8px;}
+    .comment .who{font-size:12px;font-weight:700;margin-bottom:5px;}
     .comment .when{font-size:11px;color:var(--txt3);font-weight:400;margin-left:6px;}
     .comment p{font-size:13px;line-height:1.7;color:var(--txt2);white-space:pre-wrap;}
-    .foro-form{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:20px;}
-    .foro-form input,.foro-form select,.foro-form textarea{width:100%;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--txt);font-size:13px;font-family:inherit;margin-bottom:10px;}
+    .foro-form{padding:16px;margin-bottom:20px;}
+    .foro-form input,.foro-form select,.foro-form textarea{
+      width:100%;padding:10px 12px;background:var(--bg);border:1.5px solid var(--border);border-radius:4px;
+      color:var(--txt);font-size:13px;font-family:inherit;margin-bottom:10px;
+    }
     .foro-form textarea{min-height:130px;resize:vertical;line-height:1.7;}
-    .manga-cite{display:flex;gap:12px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin:14px 0;cursor:pointer;}
-    .manga-cite img{width:48px;height:68px;object-fit:cover;border-radius:4px;background:var(--bg4);}
+    .manga-cite{display:flex;gap:12px;align-items:center;padding:10px 12px;margin:14px 0;cursor:pointer;}
+    .manga-cite img{width:48px;height:68px;object-fit:cover;border-radius:3px;background:var(--bg4);border:1.5px solid var(--ink);}
     .manga-cite .info{font-size:13px;}.manga-cite .info small{display:block;color:var(--txt2);margin-top:3px;}
-    .comment.reply{margin-left:28px;border-left:2px solid var(--acc);}.comment.deleted p{font-style:italic;color:var(--txt3);}
+    .comment.reply{margin-left:28px;border-left:3px solid var(--acc);}
+    .comment.deleted p{font-style:italic;color:var(--txt3);}
     .comment-actions{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;}
-    .comment-actions button{background:none;border:none;color:var(--txt3);font-size:11px;cursor:pointer;font-family:inherit;padding:0;}
+    .comment-actions button{background:none;border:none;color:var(--txt3);font-size:11px;cursor:pointer;font-family:inherit;padding:0;font-weight:600;}
     .comment-actions button:hover{color:var(--acc);}
     .post-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;}
-    .aviso-item,.marcador-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;gap:14px;align-items:center;cursor:pointer;}
+    .aviso-item,.marcador-item{padding:14px 16px;margin-bottom:10px;display:flex;gap:14px;align-items:center;cursor:pointer;}
     .aviso-item:hover,.marcador-item:hover{border-color:var(--acc);}
-    .aviso-item img,.marcador-item img{width:52px;height:72px;object-fit:cover;border-radius:4px;background:var(--bg4);}
+    .aviso-item img,.marcador-item img{width:52px;height:72px;object-fit:cover;border-radius:3px;background:var(--bg4);border:1.5px solid var(--ink);}
     .tabs-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
     .tabs-row .fbtn{padding:7px 16px;}
-    @media(max-width:600px){.detail-hero{flex-direction:column;}.detail-cover{width:100%;height:240px;}.grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));}.foro-wrap,.post-detail{padding:20px 16px;}.nav-links{flex-wrap:wrap;justify-content:flex-end;}}
+    @media(max-width:600px){
+      .home-hero{min-height:auto;padding:40px 20px 32px;}
+      .detail-hero{flex-direction:column;}.detail-cover,.detail-hero img{width:100%;height:240px;}
+      .grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));}
+      .foro-wrap,.post-detail,.section,.filters,.stats-row,.catalog-hero,.favs-wrap{padding-left:16px;padding-right:16px;}
+      .nav-links{flex-wrap:wrap;justify-content:flex-end;}
+      nav{padding:10px 14px;}
+    }
   </style>
 </head>
 <body>
 <nav>
   <div class="logo" onclick="goHome()">Manga<span>View</span></div>
   <div class="nav-links">
-    <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+    <button class="theme-btn" onclick="toggleTheme()" title="Cambiar tema">夜</button>
+    <button class="nav-btn" onclick="goHome()">Inicio</button>
+    <button class="nav-btn" onclick="showCatalogo()">Catálogo</button>
     <button class="nav-btn" onclick="showForo()">Foro</button>
     <button class="nav-btn" onclick="showPage('privacyPage')">Privacidad</button>
     <button class="nav-btn" id="listasBtn" onclick="showListas()" style="display:none">Listas</button>
@@ -176,13 +374,99 @@
 
 <div class="page active" id="homePage">
   <div class="home-hero">
-    <h1>Bienvenido a MangaView</h1>
-    <p>Encuentra y lee tu manga favorito en español</p>
-    <div class="search-row"><input type="text" id="searchInput" placeholder="Buscar por título o autor..." oninput="filterMangas()"/></div>
+    <div class="brand-mark">Manga<span>View</span></div>
+    <h1>Tu rincón para leer manga en español</h1>
+    <p>Capítulos nuevos, lo más querido por la comunidad y tu lista personal.</p>
+    <div class="hero-actions">
+      <button class="btn-acc" onclick="showCatalogo()">Explorar catálogo</button>
+      <button class="btn-out" onclick="showForo()">Ir al foro</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Recientes</h2>
+      <a class="linkish" onclick="showCatalogo()">Ver todo</a>
+    </div>
+    <p class="section-sub">Mangas con capítulos publicados más recientemente</p>
+    <div class="rail" id="homeRecientes"><div class="empty compact">Cargando...</div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Más populares</h2>
+      <a class="linkish" onclick="showCatalogo()">Ver catálogo</a>
+    </div>
+    <p class="section-sub">Los títulos con más favoritos en la plataforma</p>
+    <div class="rail" id="homePopulares"><div class="empty compact">Cargando...</div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Para ti</h2>
+      <a class="linkish" onclick="showCatalogo()">Ver catálogo</a>
+    </div>
+    <p class="section-sub" id="homeRecoSub">Cargando recomendaciones...</p>
+    <div class="rail" id="homeRecomendados"><div class="empty compact">Cargando...</div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Mi lista</h2>
+      <a class="linkish" id="homeListaLink" onclick="showListas()" style="display:none">Administrar</a>
+    </div>
+    <p class="section-sub">Lo que guardaste como pendiente, leyendo o terminado</p>
+    <div class="rail" id="homeMiLista"><div class="empty compact">Cargando...</div></div>
+  </div>
+
+  <div class="section" style="padding-bottom:40px;">
+    <div class="section-head">
+      <h2>En emisión</h2>
+      <a class="linkish" onclick="showCatalogoFiltrado({estado:'en_curso'})">Ver en curso</a>
+    </div>
+    <p class="section-sub">Series que siguen publicando capítulos</p>
+    <div class="rail" id="homeEmision"><div class="empty compact">Cargando...</div></div>
+  </div>
+</div>
+
+<div class="page" id="catalogoPage">
+  <div class="catalog-hero">
+    <h1>Catálogo</h1>
+    <p>Busca por nombre, género, estado o demografía</p>
+    <div class="catalog-bar">
+      <input type="text" id="catalogSearch" placeholder="Buscar por título o autor..." oninput="filterMangas()"/>
+      <select id="catalogEstado" onchange="filterMangas()">
+        <option value="todos">Estado: todos</option>
+        <option value="en_curso">En emisión</option>
+        <option value="finalizado">Finalizado</option>
+      </select>
+      <select id="catalogDemo" onchange="filterMangas()">
+        <option value="todos">Demografía: todas</option>
+        <option value="shounen">Shounen</option>
+        <option value="shoujo">Shoujo</option>
+        <option value="seinen">Seinen</option>
+      </select>
+    </div>
   </div>
   <div class="stats-row" id="statsRow"></div>
-  <div class="filters" id="filtersRow"><button class="fbtn active" onclick="filterByGenre('todos',this)">Todos</button></div>
-  <div class="section"><h2 id="sectionTitle">Catálogo</h2><div class="grid" id="mangaGrid"><div class="empty">Cargando...</div></div></div>
+  <div class="filters">
+    <div class="filters-head">
+      <div>
+        <div class="filters-label">Géneros</div>
+        <div class="filters-hint">Puedes marcar varios (ej. Acción + Fantasía). Se muestran títulos que coincidan con todos.</div>
+      </div>
+      <div class="filters-tools">
+        <input type="text" id="genreSearch" placeholder="Buscar género..." oninput="filtrarListaGeneros()"/>
+        <button type="button" class="filters-clear" onclick="limpiarGeneros()">Limpiar</button>
+      </div>
+    </div>
+    <div class="filters-selected" id="filtersSelected"></div>
+    <div class="filters-chips" id="filtersRow"></div>
+  </div>
+  <div class="section" style="padding-bottom:40px;">
+    <h2 id="sectionTitle">Todos los títulos</h2>
+    <div class="grid" id="mangaGrid"><div class="empty">Cargando...</div></div>
+  </div>
 </div>
 
 <div class="page" id="detailPage"><div id="detailContent"></div></div>
@@ -279,12 +563,28 @@
 </div>
 
 <script>
-const API='http://localhost:3000/api';
-let mangas=[],currentGenre='todos',authMode='login',currentChapter=null,currentPage=0,isDark=true;
+// Misma origen que Express (local, túnel o hosting). Si abres el HTML como archivo, usa :3000.
+const API=(typeof location!=='undefined'&&location.protocol!=='file:')
+  ?`${location.origin}/api`
+  :'http://localhost:3000/api';
+let mangas=[],selectedGeneros=[],listaGeneros=[],authMode='login',currentChapter=null,currentPage=0,isDark=false;
 
-function toggleTheme(){isDark=!isDark;document.body.classList.toggle('light',!isDark);document.querySelector('.theme-btn').textContent=isDark?'🌙':'☀️';}
+function toggleTheme(){
+  isDark=!isDark;
+  document.body.classList.toggle('night',isDark);
+  document.querySelector('.theme-btn').textContent=isDark?'紙':'夜';
+  document.querySelector('.theme-btn').title=isDark?'Modo papel':'Modo noche';
+}
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);}
-function goHome(){showPage('homePage');}
+function goHome(){showPage('homePage');cargarInicio();}
+function showCatalogo(){showPage('catalogoPage');if(!mangas.length)loadCatalog();else{renderStats();renderFilters();filterMangas();}}
+function showCatalogoFiltrado({estado,demografia,genero}={}){
+  showPage('catalogoPage');
+  if(estado)document.getElementById('catalogEstado').value=estado;
+  if(demografia)document.getElementById('catalogDemo').value=demografia;
+  if(genero)selectedGeneros=[genero];
+  if(!mangas.length)loadCatalog();else{renderStats();renderFilters();filterMangas();}
+}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
 function toggleAuthMode(){
@@ -309,7 +609,7 @@ async function submitAuth(){
     else{if(!name){msgEl.textContent='Escribe tu nombre';msgEl.className='msg error';return;}res=await fetch(`${API}/usuarios/registro`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nombre:name,correo:email,password:pass})});}
     const data=await res.json();
     if(!res.ok){msgEl.textContent=data.error||'Error al procesar';msgEl.className='msg error';return;}
-    if(authMode==='login'){localStorage.setItem('token',data.token);localStorage.setItem('user',JSON.stringify(data.usuario));updateNav();showPage('homePage');toast('Bienvenido, '+data.usuario.nombre);}
+    if(authMode==='login'){localStorage.setItem('token',data.token);localStorage.setItem('user',JSON.stringify(data.usuario));updateNav();goHome();toast('Bienvenido, '+data.usuario.nombre);}
     else{msgEl.textContent='Cuenta creada. Ahora inicia sesión.';msgEl.className='msg success';authMode='login';setTimeout(()=>toggleAuthMode(),1000);}
   }catch{msgEl.textContent='No se pudo conectar al servidor';msgEl.className='msg error';}
 }
@@ -326,32 +626,219 @@ function updateNav(){
 function getToken(){return localStorage.getItem('token');}
 
 async function loadCatalog(){
-  try{const res=await fetch(`${API}/mangas`);mangas=await res.json();renderStats();renderFilters();renderGrid(mangas);}
-  catch{document.getElementById('mangaGrid').innerHTML='<div class="empty">No se pudo conectar a la API. Asegúrate de que el servidor esté corriendo en localhost:3000</div>';}
+  try{
+    const res=await fetch(`${API}/mangas`);
+    mangas=await res.json();
+    renderStats();
+    renderFilters();
+    filterMangas();
+  }catch{
+    document.getElementById('mangaGrid').innerHTML='<div class="empty">No se pudo conectar a la API. Asegúrate de que el servidor esté corriendo en localhost:3000</div>';
+  }
 }
 
-function renderStats(){const f=mangas.filter(m=>m.estado==='finalizado').length,c=mangas.filter(m=>m.estado==='en_curso').length;document.getElementById('statsRow').innerHTML=`<div class="stat"><div class="num">${mangas.length}</div><div class="lbl">Títulos</div></div><div class="stat"><div class="num">${c}</div><div class="lbl">En curso</div></div><div class="stat"><div class="num">${f}</div><div class="lbl">Finalizados</div></div>`;}
+async function cargarInicio(){
+  const recientesEl=document.getElementById('homeRecientes');
+  const popularesEl=document.getElementById('homePopulares');
+  const recoEl=document.getElementById('homeRecomendados');
+  const recoSub=document.getElementById('homeRecoSub');
+  const listaEl=document.getElementById('homeMiLista');
+  const emisionEl=document.getElementById('homeEmision');
+  const listaLink=document.getElementById('homeListaLink');
+
+  try{
+    const [rRec,rPop,rReco,rAll]=await Promise.all([
+      fetch(`${API}/mangas/recientes?limit=10`),
+      fetch(`${API}/mangas/populares?limit=10`),
+      fetch(`${API}/mangas/recomendados?limit=10`,{headers:cabecerasAuth()}),
+      mangas.length?Promise.resolve({json:async()=>mangas}):fetch(`${API}/mangas`)
+    ]);
+    const recientes=await rRec.json();
+    const populares=await rPop.json();
+    const reco=await rReco.json();
+    if(!mangas.length)mangas=await rAll.json();
+
+    renderRail(recientesEl,recientes,{meta:'fecha'});
+    renderRail(popularesEl,populares,{meta:'favs'});
+    renderRail(emisionEl,mangas.filter(m=>m.estado==='en_curso'),{meta:'genero'});
+
+    const listaReco=Array.isArray(reco)?reco:(reco.mangas||[]);
+    const personalizado=!!reco.personalizado;
+    recoSub.textContent=personalizado
+      ?'Según lo que lees y marcas'
+      :(getToken()
+        ?'Lo más querido (marca favoritos o lista para personalizar)'
+        :'Lo más querido (inicia sesión para personalizar)');
+    renderRail(recoEl,listaReco,{meta:'genero'});
+  }catch{
+    [recientesEl,popularesEl,emisionEl,recoEl].forEach(el=>{if(el)el.innerHTML='<div class="empty compact">No se pudo cargar</div>';});
+    if(recoSub)recoSub.textContent='No se pudieron cargar las recomendaciones';
+  }
+
+  if(!getToken()){
+    listaLink.style.display='none';
+    listaEl.innerHTML='<div class="empty compact">Inicia sesión para ver tu lista · <a class="linkish" onclick="showPage(\'authPage\')">Entrar</a></div>';
+    return;
+  }
+  listaLink.style.display='';
+  try{
+    const res=await fetch(`${API}/biblioteca/listas`,{headers:cabecerasAuth()});
+    const lista=await res.json();
+    if(!Array.isArray(lista)||!lista.length){
+      listaEl.innerHTML='<div class="empty compact">Aún no tienes mangas en tu lista · <a class="linkish" onclick="showCatalogo()">Explorar</a></div>';
+      return;
+    }
+    renderRail(listaEl,lista,{meta:'lista'});
+  }catch{
+    listaEl.innerHTML='<div class="empty compact">No se pudo cargar tu lista</div>';
+  }
+}
+
+function etiquetaEstado(estado){
+  return ({
+    en_curso:'En emisión',
+    finalizado:'Finalizado',
+    pendiente:'Pendiente',
+    leyendo:'Leyendo',
+    terminado:'Terminado'
+  })[estado]||estado||'';
+}
+function claseBadge(estado){
+  return (estado==='finalizado'||estado==='terminado')?'finalizado':'en_curso';
+}
+function etiquetaDemo(d){
+  if(!d)return '';
+  const x=String(d).toLowerCase();
+  return x.charAt(0).toUpperCase()+x.slice(1);
+}
+function metaTarjeta(m,tipo){
+  if(tipo==='fecha'&&m.ultima_fecha)return 'Cap. '+fechaCorta(m.ultima_fecha);
+  if(tipo==='favs')return '♥ '+(m.favoritos_count||0)+' favoritos';
+  if(tipo==='lista')return etiquetaEstado(m.estado)+(m.genero?' · '+m.genero:'');
+  if(tipo==='genero')return (m.genero||'')+(m.demografia?' · '+etiquetaDemo(m.demografia):'');
+  return '';
+}
+function tarjetaManga(m,opts={}){
+  const meta=metaTarjeta(m,opts.meta);
+  return `<div class="card" onclick="openManga(${m.id})">
+    <img src="${esc(m.portada_url||'')}" alt="${esc(m.titulo)}" referrerpolicy="no-referrer" loading="lazy" onerror="this.onerror=null;this.src='/api/cover/'+encodeURIComponent('${esc(m.titulo).replace(/'/g,"\\'")}')"/>
+    <div class="card-info">
+      <h3>${esc(m.titulo)}</h3>
+      <p>${esc(m.autor||'Autor desconocido')}</p>
+      <span class="badge ${claseBadge(m.estado)}">${esc(etiquetaEstado(m.estado))}</span>
+      <span class="genre-tag">${esc(m.genero||'')}</span>
+      ${meta?`<div class="card-meta">${esc(meta)}</div>`:''}
+    </div>
+  </div>`;
+}
+function renderRail(el,list,opts={}){
+  if(!list||!list.length){el.innerHTML='<div class="empty compact">No hay títulos aquí todavía</div>';return;}
+  el.innerHTML=list.map(m=>tarjetaManga(m,opts)).join('');
+}
+
+function renderStats(){
+  const f=mangas.filter(m=>m.estado==='finalizado').length;
+  const c=mangas.filter(m=>m.estado==='en_curso').length;
+  document.getElementById('statsRow').innerHTML=`<div class="stat"><div class="num">${mangas.length}</div><div class="lbl">Títulos</div></div><div class="stat"><div class="num">${c}</div><div class="lbl">En emisión</div></div><div class="stat"><div class="num">${f}</div><div class="lbl">Finalizados</div></div>`;
+}
+function normalizarGenero(g){
+  const s=String(g||'').trim();
+  if(/^suspense$/i.test(s))return 'Suspenso';
+  return s;
+}
+function temasDeManga(m){
+  const temas=new Set();
+  if(m.genero)temas.add(normalizarGenero(m.genero));
+  const ex=MANGA_EXTRA[m.titulo];
+  if(ex&&ex.temas)ex.temas.forEach(t=>{
+    const n=normalizarGenero(t);
+    if(n&&!['Shounen','Shoujo','Seinen'].includes(n))temas.add(n);
+  });
+  return temas;
+}
 function renderFilters(){
+  const todos=new Set();
+  mangas.forEach(m=>temasDeManga(m).forEach(t=>todos.add(t)));
+  listaGeneros=[...todos].sort((a,b)=>a.localeCompare(b,'es'));
   const row=document.getElementById('filtersRow');
-  const todosLosTemas=new Set();
-  mangas.forEach(m=>{const ex=MANGA_EXTRA[m.titulo];if(ex&&ex.temas)ex.temas.forEach(t=>todosLosTemas.add(t));});
-  const btn=document.createElement('button');
-  btn.className='fbtn active';
-  btn.textContent='Todos';
-  btn.onclick=function(){filterByGenre('todos',this);};
   row.innerHTML='';
-  row.appendChild(btn);
-  [...todosLosTemas].sort().forEach(x=>{
+  listaGeneros.forEach(x=>{
     const b=document.createElement('button');
-    b.className='fbtn';
+    b.type='button';
+    b.className='fbtn'+(selectedGeneros.includes(x)?' active':'');
+    b.dataset.genre=x;
     b.textContent=x;
-    b.onclick=function(){filterByGenre(x,this);};
+    b.onclick=function(){toggleGenero(x);};
     row.appendChild(b);
   });
+  renderSelectedGeneros();
+  filtrarListaGeneros();
 }
-function filterByGenre(g,btn){currentGenre=g;document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');filterMangas();}
-function filterMangas(){const q=(document.getElementById('searchInput').value||'').toLowerCase();let l=mangas;if(currentGenre!=='todos')l=l.filter(m=>m.genero===currentGenre);if(q)l=l.filter(m=>m.titulo.toLowerCase().includes(q)||(m.autor||'').toLowerCase().includes(q));document.getElementById('sectionTitle').textContent='Catálogo ('+l.length+' títulos)';renderGrid(l);}
-function renderGrid(list){const g=document.getElementById('mangaGrid');if(!list.length){g.innerHTML='<div class="empty">No se encontraron resultados</div>';return;}g.innerHTML=list.map(m=>`<div class="card" onclick="openManga(${m.id})"><img src="${m.portada_url||''}" alt="${m.titulo}" onerror="this.src='https://via.placeholder.com/160x220/1a1a1a/e94560?text=Sin+portada'"/><div class="card-info"><h3>${m.titulo}</h3><p>${m.autor||'Autor desconocido'}</p><span class="badge ${m.estado}">${m.estado==='en_curso'?'En curso':'Finalizado'}</span><span class="genre-tag">${m.genero||''}</span></div></div>`).join('');}
+function toggleGenero(g){
+  const i=selectedGeneros.indexOf(g);
+  if(i>=0)selectedGeneros.splice(i,1);
+  else selectedGeneros.push(g);
+  document.querySelectorAll('#filtersRow .fbtn').forEach(b=>{
+    b.classList.toggle('active',selectedGeneros.includes(b.dataset.genre));
+  });
+  renderSelectedGeneros();
+  filterMangas();
+}
+function quitarGenero(g){
+  selectedGeneros=selectedGeneros.filter(x=>x!==g);
+  document.querySelectorAll('#filtersRow .fbtn').forEach(b=>{
+    b.classList.toggle('active',selectedGeneros.includes(b.dataset.genre));
+  });
+  renderSelectedGeneros();
+  filterMangas();
+}
+function limpiarGeneros(){
+  selectedGeneros=[];
+  const buscador=document.getElementById('genreSearch');
+  if(buscador)buscador.value='';
+  document.querySelectorAll('#filtersRow .fbtn').forEach(b=>b.classList.remove('active','hidden-genre'));
+  renderSelectedGeneros();
+  filterMangas();
+}
+function renderSelectedGeneros(){
+  const box=document.getElementById('filtersSelected');
+  if(!box)return;
+  if(!selectedGeneros.length){box.innerHTML='';return;}
+  box.innerHTML=selectedGeneros.map(g=>
+    `<span class="genre-pill">${esc(g)} <button type="button" aria-label="Quitar ${esc(g)}" onclick="quitarGenero('${String(g).replace(/'/g,"\\'")}')">×</button></span>`
+  ).join('');
+}
+function filtrarListaGeneros(){
+  const q=(document.getElementById('genreSearch')?.value||'').toLowerCase().trim();
+  document.querySelectorAll('#filtersRow .fbtn').forEach(b=>{
+    const nombre=(b.dataset.genre||'').toLowerCase();
+    b.classList.toggle('hidden-genre',!!q&&!nombre.includes(q));
+  });
+}
+function mangaCoincideGeneros(m,generos){
+  if(!generos.length)return true;
+  const temas=temasDeManga(m);
+  // AND: debe cumplir todos los géneros seleccionados.
+  return generos.every(g=>temas.has(g));
+}
+function filterMangas(){
+  const q=(document.getElementById('catalogSearch').value||'').toLowerCase().trim();
+  const estado=document.getElementById('catalogEstado').value;
+  const demo=document.getElementById('catalogDemo').value;
+  let l=mangas.slice();
+  if(selectedGeneros.length)l=l.filter(m=>mangaCoincideGeneros(m,selectedGeneros));
+  if(estado!=='todos')l=l.filter(m=>m.estado===estado);
+  if(demo!=='todos')l=l.filter(m=>String(m.demografia||'shounen').toLowerCase()===demo);
+  if(q)l=l.filter(m=>m.titulo.toLowerCase().includes(q)||(m.autor||'').toLowerCase().includes(q));
+  const extra=selectedGeneros.length?` · ${selectedGeneros.join(' + ')}`:'';
+  document.getElementById('sectionTitle').textContent=l.length+' título'+(l.length===1?'':'s')+extra;
+  renderGrid(l);
+}
+function renderGrid(list){
+  const g=document.getElementById('mangaGrid');
+  if(!list.length){g.innerHTML='<div class="empty">No se encontraron resultados</div>';return;}
+  g.innerHTML=list.map(m=>tarjetaManga(m,{meta:'genero'})).join('');
+}
 
 
 const MANGA_EXTRA = {
@@ -383,8 +870,8 @@ const MANGA_EXTRA = {
       {titulo:'Shingeki no Kyojin: Lost Girls (supervision)',anio:'2015'},
       {titulo:'Shingeki no Kyojin: Junior High (supervision)',anio:'2012'}
     ]},
-  'Death Note': { score:'8.71', ranked:'#67', popularidad:'#2', miembros:'320,000', volumen:'12', tipo:'Manga', demografia:'Shounen', serializado:'Weekly Shounen Jump', publicado:'Dic 2003 - May 2006',
-    temas:['Misterio','Psicologico','Sobrenatural','Thriller','Shounen','Drama','Suspense'],
+  'Death Note': { score:'8.71', ranked:'#67', popularidad:'#2', miembros:'320,000', volumen:'12', tipo:'Manga', demografia:'Seinen', serializado:'Weekly Shounen Jump', publicado:'Dic 2003 - May 2006',
+    temas:['Misterio','Psicologico','Sobrenatural','Thriller','Seinen','Drama','Suspense'],
     otrasObras:[
       {titulo:'Bokurano (escritor)',anio:'2003'},
       {titulo:'Platinum End',anio:'2015'},
@@ -416,11 +903,52 @@ const MANGA_EXTRA = {
       {titulo:'Shanghai Requiem (one-shot)',anio:'2002'},
       {titulo:'Fullmetal Alchemist: The Valley of the White Petals (novela)',anio:'2004'}
     ]},
-  'Mayonaka Heart Tune': { score:'8.45', ranked:'#120', popularidad:'#210', miembros:'85,000', volumen:'13+', tipo:'Manga', demografia:'Shounen', serializado:'Weekly Shounen Magazine', publicado:'Sep 2023 - Presente',
-    temas:['Romance','Comedia','Escolar','Misterio','Shounen','Drama'],
+  'Mayonaka Heart Tune': { score:'8.45', ranked:'#120', popularidad:'#210', miembros:'85,000', volumen:'13+', tipo:'Manga', demografia:'Shoujo', serializado:'Weekly Shounen Magazine', publicado:'Sep 2023 - Presente',
+    temas:['Romance','Comedia','Escolar','Misterio','Shoujo','Drama'],
     otrasObras:[
       {titulo:'Tune In to the Midnight Heart (titulo en ingles)',anio:'2023'}
-    ]}
+    ]},
+  'Jujutsu Kaisen': { demografia:'Shounen', temas:['Accion','Sobrenatural','Fantasia','Shounen'], tipo:'Manga', volumen:'30+' },
+  'Chainsaw Man': { demografia:'Shounen', temas:['Accion','Horror','Gore','Shounen'], tipo:'Manga', volumen:'17+' },
+  'Spy x Family': { demografia:'Shounen', temas:['Comedia','Accion','Escolar','Shounen'], tipo:'Manga', volumen:'14+' },
+  'Bleach': { demografia:'Shounen', temas:['Accion','Sobrenatural','Shounen'], tipo:'Manga', volumen:'74' },
+  'Hunter x Hunter': { demografia:'Shounen', temas:['Aventura','Accion','Fantasia','Shounen'], tipo:'Manga', volumen:'38+' },
+  'Tokyo Ghoul': { demografia:'Seinen', temas:['Horror','Accion','Psicologico','Seinen'], tipo:'Manga', volumen:'14' },
+  'Haikyuu!!': { demografia:'Shounen', temas:['Deportes','Comedia','Escolar','Shounen'], tipo:'Manga', volumen:'45' },
+  'Black Clover': { demografia:'Shounen', temas:['Fantasia','Accion','Shounen'], tipo:'Manga', volumen:'37+' },
+  'Fairy Tail': { demografia:'Shounen', temas:['Fantasia','Aventura','Comedia','Shounen'], tipo:'Manga', volumen:'63' },
+  "JoJo's Bizarre Adventure": { demografia:'Shounen', temas:['Aventura','Accion','Sobrenatural','Shounen'], tipo:'Manga', volumen:'130+' },
+  'Berserk': { demografia:'Seinen', temas:['Fantasia','Horror','Gore','Seinen'], tipo:'Manga', volumen:'42+' },
+  'Vinland Saga': { demografia:'Seinen', temas:['Historico','Accion','Drama','Seinen'], tipo:'Manga', volumen:'28+' },
+  'Mob Psycho 100': { demografia:'Shounen', temas:['Comedia','Accion','Sobrenatural','Shounen'], tipo:'Manga', volumen:'16' },
+  'One Punch Man': { demografia:'Shounen', temas:['Accion','Comedia','Superpoderes','Shounen'], tipo:'Manga', volumen:'30+' },
+  'Solo Leveling': { demografia:'Shounen', temas:['Fantasia','Accion','Aventura','Shounen'], tipo:'Manga', volumen:'14' },
+  'The Promised Neverland': { demografia:'Shounen', temas:['Suspense','Misterio','Thriller','Shounen'], tipo:'Manga', volumen:'20' },
+  'Blue Lock': { demografia:'Shounen', temas:['Deportes','Drama','Shounen'], tipo:'Manga', volumen:'30+' },
+  'Sakamoto Days': { demografia:'Shounen', temas:['Accion','Comedia','Shounen'], tipo:'Manga', volumen:'20+' },
+  'Dandadan': { demografia:'Shounen', temas:['Sobrenatural','Comedia','Romance','Shounen'], tipo:'Manga', volumen:'18+' },
+  'Frieren': { demografia:'Shounen', temas:['Fantasia','Aventura','Drama','Shounen'], tipo:'Manga', volumen:'13+' },
+  'Bocchi the Rock!': { demografia:'Shounen', temas:['Comedia','Escolar','Musica','Shounen'], tipo:'Manga', volumen:'6+' },
+  "Komi Can't Communicate": { demografia:'Shounen', temas:['Comedia','Romance','Escolar','Shounen'], tipo:'Manga', volumen:'37' },
+  'Horimiya': { demografia:'Shounen', temas:['Romance','Comedia','Escolar','Shounen'], tipo:'Manga', volumen:'17' },
+  'Fruits Basket': { demografia:'Shoujo', temas:['Romance','Drama','Comedia','Shoujo'], tipo:'Manga', volumen:'23' },
+  'Sailor Moon': { demografia:'Shoujo', temas:['Fantasia','Romance','Magia','Shoujo'], tipo:'Manga', volumen:'18' },
+  'Neon Genesis Evangelion': { demografia:'Seinen', temas:['Mecha','Psicologico','Drama','Seinen'], tipo:'Manga', volumen:'14' },
+  'Cowboy Bebop': { demografia:'Seinen', temas:['Ciencia Ficcion','Accion','Drama','Seinen'], tipo:'Manga', volumen:'3' },
+  'Steins;Gate': { demografia:'Seinen', temas:['Ciencia Ficcion','Suspense','Drama','Seinen'], tipo:'Manga', volumen:'3' },
+  'Code Geass': { demografia:'Shounen', temas:['Mecha','Drama','Militar','Shounen'], tipo:'Manga', volumen:'8' },
+  'Sword Art Online': { demografia:'Shounen', temas:['Fantasia','Aventura','Ciencia Ficcion','Shounen'], tipo:'Manga', volumen:'28+' },
+  'Kaguya-sama: Love is War': { demografia:'Seinen', temas:['Romance','Comedia','Escolar','Seinen'], tipo:'Manga', volumen:'28' },
+  'Oshi no Ko': { demografia:'Seinen', temas:['Drama','Misterio','Idols','Seinen'], tipo:'Manga', volumen:'16+' },
+  'Dr. Stone': { demografia:'Shounen', temas:['Ciencia Ficcion','Aventura','Comedia','Shounen'], tipo:'Manga', volumen:'26' },
+  'Assassination Classroom': { demografia:'Shounen', temas:['Accion','Comedia','Escolar','Shounen'], tipo:'Manga', volumen:'21' },
+  'The Apothecary Diaries': { demografia:'Josei', temas:['Misterio','Drama','Historico','Josei'], tipo:'Manga', volumen:'15+' },
+  'Gintama': { demografia:'Shounen', temas:['Comedia','Accion','Sci-Fi','Shounen'], tipo:'Manga', volumen:'77' },
+  'Noragami': { demografia:'Shounen', temas:['Fantasia','Accion','Sobrenatural','Shounen'], tipo:'Manga', volumen:'27+' },
+  'Soul Eater': { demografia:'Shounen', temas:['Accion','Fantasia','Comedia','Shounen'], tipo:'Manga', volumen:'25' },
+  'Lookism': { demografia:'Shounen', temas:['Drama','Accion','Escolar','Manhwa'], tipo:'Manhwa', volumen:'Webtoon' },
+  'Wind Breaker': { demografia:'Shounen', temas:['Accion','Escolar','Amistad','Shounen'], tipo:'Manga', volumen:'20+' },
+  'Mushoku Tensei': { demografia:'Shounen', temas:['Fantasia','Aventura','Isekai','Shounen'], tipo:'Manga', volumen:'20+' }
 };
 async function openManga(id){
   try{
@@ -445,7 +973,7 @@ async function openManga(id){
 
         <!-- Columna izquierda -->
         <div style="width:220px;min-width:180px;margin-right:32px;flex-shrink:0;">
-          <img src="${manga.portada_url||''}" alt="${esc(manga.titulo)}" onerror="this.onerror=null;this.style.background='#222'" style="width:100%;border-radius:6px;box-shadow:0 4px 20px rgba(0,0,0,.5);margin-bottom:14px;"/>
+          <img src="${esc(manga.portada_url||'')}" alt="${esc(manga.titulo)}" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='/api/cover/'+encodeURIComponent('${esc(manga.titulo).replace(/'/g,"\\'")}')" style="width:100%;border-radius:6px;box-shadow:0 4px 20px rgba(0,0,0,.5);margin-bottom:14px;"/>
           ${chapters.length?`<button class="btn-acc" style="width:100%;margin-bottom:8px;" onclick="openChapter(${chapters[0].id},'${tituloJs}',1)">▶ Leer ahora</button>`:''}
           ${u?`<button class="btn-out" style="width:100%;margin-bottom:8px;" onclick="toggleFav(${manga.id})">♥ Agregar a favoritos</button>
           <button class="btn-out" style="width:100%;margin-bottom:8px;" onclick="toggleSeguir(${manga.id},${siguiendo})">${siguiendo?'✓ Siguiendo':'＋ Seguir manga'}</button>
@@ -462,10 +990,10 @@ async function openManga(id){
               ['Tipo', ex.tipo||'Manga'],
               ['Volúmenes', ex.volumen||'—'],
               ['Capítulos', ex.volumen?chapters.length+' (demo)':'—'],
-              ['Estado', manga.estado==='en_curso'?'En curso':'Finalizado'],
+              ['Estado', etiquetaEstado(manga.estado)],
               ['Publicado', ex.publicado||'—'],
               ['Serializado', ex.serializado||'—'],
-              ['Demografía', ex.demografia||'—'],
+              ['Demografía', etiquetaDemo(manga.demografia)||ex.demografia||'—'],
               ['Género', manga.genero||'—'],
             ].map(([l,v])=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:var(--txt2);">${l}</span><span style="font-weight:500;text-align:right;max-width:120px;">${v}</span></div>`).join('')}
           </div>
@@ -558,12 +1086,18 @@ async function openChapter(id,title,num){
 
 let currentReaderTitle='',currentReaderNum=1;
 
+function cerrarLector(){
+  const mangaId=currentChapter&&currentChapter.manga_id;
+  if(mangaId){openManga(mangaId);return;}
+  goHome();
+}
+
 function renderReader(title,num){
   const pages=currentChapter.paginas||[];
   const sesion=!!getToken();
   document.getElementById('readerContent').innerHTML=`
     <div class="reader-header">
-      <button class="back-btn" onclick="history.back()">‹</button>
+      <button class="back-btn" type="button" onclick="cerrarLector()" title="Volver al manga" aria-label="Volver">‹</button>
       <div style="flex:1"><h2>${esc(title)}</h2><div class="chap">Capítulo ${num}${currentChapter.titulo?' — '+esc(currentChapter.titulo):''}</div></div>
       ${sesion?`<button class="btn-out" style="padding:6px 12px;font-size:12px;" onclick="guardarMarcador()">🔖 Marcar página</button>`:''}
     </div>
@@ -606,7 +1140,7 @@ async function saveProgress(){const t=getToken();if(!t||!currentChapter)return;t
 
 async function showProfile(){const t=getToken();if(!t){showPage('authPage');return;}try{const res=await fetch(`${API}/usuarios/perfil`,{headers:{'Authorization':'Bearer '+t}});const u=await res.json();document.getElementById('profileContent').innerHTML=`<div class="profile-field"><span class="lbl">Nombre</span><span>${u.nombre}</span></div><div class="profile-field"><span class="lbl">Correo</span><span>${u.correo}</span></div><div class="profile-field"><span class="lbl">Miembro desde</span><span>${new Date(u.fecha_registro).toLocaleDateString('es-MX')}</span></div><br/><button class="btn-acc" onclick="logout()">Cerrar sesión</button>`;showPage('profilePage');}catch{toast('Error al cargar perfil');}}
 
-async function showFavs(){const t=getToken();if(!t){showPage('authPage');return;}showPage('favsPage');try{const res=await fetch(`${API}/usuarios/favoritos`,{headers:{'Authorization':'Bearer '+t}});const f=await res.json();const g=document.getElementById('favsGrid');if(!f.length){g.innerHTML='<div class="empty">No tienes favoritos aún</div>';return;}g.innerHTML=f.map(m=>`<div class="card" onclick="openManga(${m.id})"><img src="${m.portada_url||''}" alt="${m.titulo}" onerror="this.src='https://via.placeholder.com/160x220/1a1a1a/e94560?text=Sin+portada'"/><div class="card-info"><h3>${m.titulo}</h3><p>${m.autor||''}</p><span class="badge ${m.estado}">${m.estado==='en_curso'?'En curso':'Finalizado'}</span></div></div>`).join('');}catch{document.getElementById('favsGrid').innerHTML='<div class="empty">Error al cargar favoritos</div>';}}
+async function showFavs(){const t=getToken();if(!t){showPage('authPage');return;}showPage('favsPage');try{const res=await fetch(`${API}/usuarios/favoritos`,{headers:{'Authorization':'Bearer '+t}});const f=await res.json();const g=document.getElementById('favsGrid');if(!f.length){g.innerHTML='<div class="empty">No tienes favoritos aún</div>';return;}g.innerHTML=f.map(m=>tarjetaManga(m)).join('');}catch{document.getElementById('favsGrid').innerHTML='<div class="empty">Error al cargar favoritos</div>';}}
 
 /* ---------------------------------------------------------------------------
    Utilidades compartidas + biblioteca + foro
@@ -627,7 +1161,7 @@ async function cargarListas(estado,btn){
     const list=await res.json();
     if(!res.ok){g.innerHTML=`<div class="empty">${esc(list.error||'Error')}</div>`;return;}
     if(!list.length){g.innerHTML='<div class="empty">No hay mangas en esta lista</div>';return;}
-    g.innerHTML=list.map(m=>`<div class="card" onclick="openManga(${m.id})"><img src="${m.portada_url||''}" alt="${esc(m.titulo)}"/><div class="card-info"><h3>${esc(m.titulo)}</h3><p>${esc(m.autor||'')}</p><span class="badge ${m.estado}">${esc(estado)}</span></div></div>`).join('');
+    g.innerHTML=list.map(m=>tarjetaManga({...m,estado})).join('');
   }catch{g.innerHTML='<div class="empty">No se pudo cargar</div>';}
 }
 
@@ -947,7 +1481,8 @@ async function publicar(){
 }
 
 document.addEventListener('keydown',e=>{if(!document.getElementById('readerPage').classList.contains('active'))return;if(e.key==='ArrowLeft')prevPage();if(e.key==='ArrowRight')nextPage();});
-updateNav();loadCatalog();
+updateNav();
+loadCatalog().then(()=>cargarInicio());
 </script>
 </body>
 </html>

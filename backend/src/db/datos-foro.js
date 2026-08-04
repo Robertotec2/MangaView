@@ -235,12 +235,51 @@ const LISTAS_DEMO = [
   { usuario: 0, manga: 'Attack on Titan', estado: 'terminado' },
   { usuario: 0, manga: 'One Piece', estado: 'leyendo' },
   { usuario: 0, manga: 'Death Note', estado: 'pendiente' },
+  { usuario: 0, manga: 'Mayonaka Heart Tune', estado: 'leyendo' },
   { usuario: 1, manga: 'Death Note', estado: 'terminado' },
   { usuario: 1, manga: 'Fullmetal Alchemist', estado: 'leyendo' },
   { usuario: 1, manga: 'Naruto', estado: 'pendiente' },
   { usuario: 2, manga: 'Demon Slayer', estado: 'leyendo' },
   { usuario: 3, manga: 'Dragon Ball', estado: 'terminado' },
   { usuario: 4, manga: 'My Hero Academia', estado: 'pendiente' }
+];
+
+/**
+ * Favoritos de demo con conteos distintos: One Piece es el más marcado, luego
+ * Naruto y Attack on Titan. Alimenta la sección "Más populares" del inicio.
+ */
+const FAVORITOS_DEMO = [
+  { usuario: 0, manga: 'One Piece' },
+  { usuario: 1, manga: 'One Piece' },
+  { usuario: 2, manga: 'One Piece' },
+  { usuario: 3, manga: 'One Piece' },
+  { usuario: 4, manga: 'One Piece' },
+  { usuario: 5, manga: 'One Piece' },
+  { usuario: 0, manga: 'Jujutsu Kaisen' },
+  { usuario: 1, manga: 'Jujutsu Kaisen' },
+  { usuario: 2, manga: 'Jujutsu Kaisen' },
+  { usuario: 3, manga: 'Jujutsu Kaisen' },
+  { usuario: 4, manga: 'Jujutsu Kaisen' },
+  { usuario: 0, manga: 'Naruto' },
+  { usuario: 1, manga: 'Naruto' },
+  { usuario: 2, manga: 'Naruto' },
+  { usuario: 3, manga: 'Naruto' },
+  { usuario: 0, manga: 'Chainsaw Man' },
+  { usuario: 1, manga: 'Chainsaw Man' },
+  { usuario: 2, manga: 'Chainsaw Man' },
+  { usuario: 0, manga: 'Attack on Titan' },
+  { usuario: 1, manga: 'Attack on Titan' },
+  { usuario: 2, manga: 'Attack on Titan' },
+  { usuario: 0, manga: 'Demon Slayer' },
+  { usuario: 1, manga: 'Demon Slayer' },
+  { usuario: 0, manga: 'Spy x Family' },
+  { usuario: 1, manga: 'Spy x Family' },
+  { usuario: 0, manga: 'Death Note' },
+  { usuario: 1, manga: 'Mayonaka Heart Tune' },
+  { usuario: 2, manga: 'My Hero Academia' },
+  { usuario: 3, manga: 'Fullmetal Alchemist' },
+  { usuario: 4, manga: 'Frieren' },
+  { usuario: 5, manga: 'Solo Leveling' }
 ];
 
 const SEGUIDOS_DEMO = [
@@ -266,5 +305,6 @@ module.exports = {
   PASSWORD_DEMO,
   LISTAS_DEMO,
   SEGUIDOS_DEMO,
-  MARCADORES_DEMO
+  MARCADORES_DEMO,
+  FAVORITOS_DEMO
 };

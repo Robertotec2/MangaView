@@ -24,7 +24,8 @@ const {
   PASSWORD_DEMO,
   LISTAS_DEMO,
   SEGUIDOS_DEMO,
-  MARCADORES_DEMO
+  MARCADORES_DEMO,
+  FAVORITOS_DEMO
 } = require('./datos-foro');
 // Se reutiliza la constante del servicio en lugar de volver a leer la variable
 // de entorno, para que el coste de bcrypt no pueda divergir entre el registro
@@ -52,16 +53,25 @@ async function aplicarEsquema(cliente) {
 
 async function insertarManga(cliente, manga) {
   const { rows } = await cliente.query(
-    `INSERT INTO mangas (titulo, autor, genero, sinopsis, portada_url, estado)
-     VALUES ($1, $2, $3, $4, $5, $6)
+    `INSERT INTO mangas (titulo, autor, genero, demografia, sinopsis, portada_url, estado)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      ON CONFLICT (titulo) DO UPDATE
        SET autor = EXCLUDED.autor,
            genero = EXCLUDED.genero,
+           demografia = EXCLUDED.demografia,
            sinopsis = EXCLUDED.sinopsis,
            portada_url = EXCLUDED.portada_url,
            estado = EXCLUDED.estado
      RETURNING id`,
-    [manga.titulo, manga.autor, manga.genero, manga.sinopsis, portadaDe(manga), manga.estado]
+    [
+      manga.titulo,
+      manga.autor,
+      manga.genero,
+      manga.demografia || 'shounen',
+      manga.sinopsis,
+      portadaDe(manga),
+      manga.estado
+    ]
   );
   return rows[0].id;
 }
@@ -214,6 +224,18 @@ async function sembrarBiblioteca(cliente, idsUsuarios, idsMangas, total) {
     total.listas++;
   }
 
+  for (const fila of FAVORITOS_DEMO) {
+    const mangaId = idsMangas[fila.manga];
+    if (!mangaId) continue;
+    await cliente.query(
+      `INSERT INTO favoritos (usuario_id, manga_id)
+       VALUES ($1, $2)
+       ON CONFLICT (usuario_id, manga_id) DO NOTHING`,
+      [idsUsuarios[fila.usuario], mangaId]
+    );
+    total.favoritos++;
+  }
+
   for (const fila of SEGUIDOS_DEMO) {
     const mangaId = idsMangas[fila.manga];
     if (!mangaId) continue;
@@ -291,7 +313,7 @@ async function seed() {
   const cliente = await db.pool.connect();
   const total = {
     mangas: 0, capitulos: 0, paginas: 0, temas: 0, publicaciones: 0,
-    comentarios: 0, listas: 0, seguidos: 0, marcadores: 0
+    comentarios: 0, listas: 0, seguidos: 0, marcadores: 0, favoritos: 0
   };
 
   try {
@@ -331,8 +353,8 @@ async function seed() {
       `y ${total.comentarios} comentarios nuevos.`
     );
     console.log(
-      `Biblioteca: ${total.listas} en listas, ${total.seguidos} follows ` +
-      `y ${total.marcadores} marcadores.`
+      `Biblioteca: ${total.listas} en listas, ${total.seguidos} follows, ` +
+      `${total.marcadores} marcadores y ${total.favoritos} favoritos.`
     );
   } catch (err) {
     await cliente.query('ROLLBACK');

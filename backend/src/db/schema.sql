@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS mangas (
   titulo VARCHAR(200) NOT NULL,
   autor VARCHAR(100),
   genero VARCHAR(50),
+  demografia VARCHAR(20) DEFAULT 'shounen',
   sinopsis TEXT,
   portada_url TEXT,
   estado VARCHAR(20) DEFAULT 'en_curso'
@@ -173,6 +174,7 @@ ALTER TABLE foro_publicaciones ADD COLUMN IF NOT EXISTS borrada BOOLEAN NOT NULL
 ALTER TABLE foro_comentarios ADD COLUMN IF NOT EXISTS padre_id INT REFERENCES foro_comentarios(id) ON DELETE CASCADE;
 ALTER TABLE foro_comentarios ADD COLUMN IF NOT EXISTS fecha_edicion TIMESTAMP;
 ALTER TABLE foro_comentarios ADD COLUMN IF NOT EXISTS borrado BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE mangas ADD COLUMN IF NOT EXISTS demografia VARCHAR(20) DEFAULT 'shounen';
 
 -- Claves naturales necesarias para que el seed sea idempotente.
 -- Sin ellas no se puede usar ON CONFLICT y volver a cargar los datos
