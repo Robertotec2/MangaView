@@ -90,7 +90,41 @@
     .favs-wrap{padding:24px 32px;}.favs-wrap h1{font-size:22px;margin-bottom:20px;}
     .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border);color:var(--txt);padding:10px 20px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;}
     .toast.show{opacity:1;}
-    @media(max-width:600px){.detail-hero{flex-direction:column;}.detail-cover{width:100%;height:240px;}.grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));}}
+    /* Foro */
+    .foro-wrap{padding:24px 32px;max-width:1000px;margin:0 auto;}
+    .foro-head h1{font-size:24px;margin-bottom:6px;}
+    .foro-head p{font-size:13px;color:var(--txt2);margin-bottom:18px;}
+    .foro-tools{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+    .foro-tools input,.foro-tools select{padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--txt);font-size:13px;font-family:inherit;}
+    .foro-tools input{flex:1;min-width:220px;}
+    .temas-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:22px;}
+    .tema-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;cursor:pointer;transition:transform .2s,border-color .2s;}
+    .tema-card:hover{border-color:var(--acc);transform:translateY(-2px);}
+    .tema-card.active{border-color:var(--acc);background:var(--bg3);}
+    .tema-card .ic{font-size:20px;}
+    .tema-card h4{font-size:13px;margin:6px 0 4px;}
+    .tema-card p{font-size:11px;color:var(--txt2);line-height:1.5;}
+    .tema-card .cnt{font-size:11px;color:var(--acc);margin-top:8px;}
+    .post-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color .2s;}
+    .post-item:hover{border-color:var(--acc);}
+    .post-item h3{font-size:15px;margin-bottom:6px;}
+    .post-item .excerpt{font-size:13px;color:var(--txt2);line-height:1.6;margin-bottom:10px;}
+    .post-meta{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--txt3);align-items:center;}
+    .tema-badge{background:var(--bg4);color:var(--txt2);padding:3px 10px;border-radius:20px;font-size:11px;display:inline-block;}
+    .post-detail{max-width:820px;margin:0 auto;padding:24px 32px;}
+    .post-body{font-size:14px;line-height:1.9;margin:18px 0 4px;white-space:pre-wrap;}
+    .react-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:16px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin:18px 0 22px;}
+    .react-btn{background:var(--bg3);border:1px solid var(--border);color:var(--txt2);padding:8px 16px;border-radius:20px;cursor:pointer;font-size:13px;font-family:inherit;transition:all .2s;}
+    .react-btn:hover{border-color:var(--acc);color:var(--txt);}
+    .react-btn.on{background:var(--acc);border-color:var(--acc);color:#fff;}
+    .comment{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:8px;}
+    .comment .who{font-size:12px;font-weight:600;margin-bottom:5px;}
+    .comment .when{font-size:11px;color:var(--txt3);font-weight:400;margin-left:6px;}
+    .comment p{font-size:13px;line-height:1.7;color:var(--txt2);white-space:pre-wrap;}
+    .foro-form{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:20px;}
+    .foro-form input,.foro-form select,.foro-form textarea{width:100%;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--txt);font-size:13px;font-family:inherit;margin-bottom:10px;}
+    .foro-form textarea{min-height:130px;resize:vertical;line-height:1.7;}
+    @media(max-width:600px){.detail-hero{flex-direction:column;}.detail-cover{width:100%;height:240px;}.grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));}.foro-wrap,.post-detail{padding:20px 16px;}}
   </style>
 </head>
 <body>
@@ -98,6 +132,7 @@
   <div class="logo" onclick="goHome()">Manga<span>View</span></div>
   <div class="nav-links">
     <button class="theme-btn" onclick="toggleTheme()">🌙</button>
+    <button class="nav-btn" onclick="showForo()">Foro</button>
     <button class="nav-btn" onclick="showPage('privacyPage')">Privacidad</button>
     <button class="nav-btn" id="favsBtn" onclick="showFavs()" style="display:none">♥ Favoritos</button>
     <button class="nav-btn" id="profileBtn" onclick="showProfile()" style="display:none">Mi perfil</button>
@@ -145,12 +180,45 @@
   <div class="favs-wrap"><h1>♥ Mis favoritos</h1><div class="grid" id="favsGrid"><div class="empty">Cargando...</div></div></div>
 </div>
 
+<div class="page" id="foroPage">
+  <div class="foro-wrap">
+    <div class="foro-head">
+      <h1>Foro de la comunidad</h1>
+      <p>Comparte lo que lees, pide recomendaciones y resuelve dudas</p>
+    </div>
+    <div class="foro-tools">
+      <input type="text" id="foroSearch" placeholder="Buscar publicaciones por título o contenido..." oninput="buscarEnForo()"/>
+      <select id="foroOrden" onchange="cargarPublicaciones()">
+        <option value="recientes">Más recientes</option>
+        <option value="populares">Más votadas</option>
+      </select>
+      <button class="btn-acc" onclick="alternarFormulario()">＋ Nueva publicación</button>
+    </div>
+    <div class="temas-row" id="temasRow"></div>
+    <div class="foro-form" id="foroForm" style="display:none">
+      <div class="msg" id="foroMsg"></div>
+      <select id="nuevoTema"></select>
+      <input type="text" id="nuevoTitulo" placeholder="Título de la publicación" maxlength="200"/>
+      <textarea id="nuevoCuerpo" placeholder="Escribe aquí tu publicación..." maxlength="5000"></textarea>
+      <button class="btn-acc" onclick="publicar()">Publicar</button>
+      <button class="btn-out" onclick="alternarFormulario()">Cancelar</button>
+    </div>
+    <h2 id="foroListTitle" style="font-size:15px;color:var(--txt2);margin-bottom:12px;">Todas las publicaciones</h2>
+    <div id="postList"><div class="empty">Cargando...</div></div>
+  </div>
+</div>
+
+<div class="page" id="postPage"><div class="post-detail" id="postContent"></div></div>
+
 <div class="page" id="privacyPage">
   <div class="privacy-wrap">
     <h1>Política de Privacidad</h1>
     <p class="date">Última actualización: Junio 2026</p>
     <h2>1. Información que recopilamos</h2>
     <p>MangaView recopila la información que el usuario proporciona al momento del registro: nombre, correo electrónico y contraseña. También registramos el progreso de lectura y los títulos marcados como favoritos.</p>
+    <p>En el foro se guardan las publicaciones, los comentarios y las reacciones que escribes, asociados a tu cuenta y visibles para el resto de la comunidad. Si eliminas tu cuenta, tus publicaciones permanecen sin autor para no dejar huecos en las conversaciones de otras personas.</p>
+    <h2>1.1 Conteo de visitas del foro</h2>
+    <p>Para mostrar cuántas personas vieron una publicación necesitamos distinguir visitantes, no visitas. Con la sesión iniciada usamos el identificador de tu cuenta. Sin sesión calculamos un código irreversible a partir de la dirección de conexión y del navegador: no se puede volver atrás para obtener esos datos y <strong>nunca almacenamos tu dirección IP</strong>. Ese código solo sirve para no contarte dos veces en la misma publicación.</p>
     <h2>2. Uso de la información</h2>
     <p>Los datos recopilados se utilizan exclusivamente para personalizar la experiencia dentro de la plataforma. No vendemos ni compartimos tu información personal con terceros.</p>
     <h2>3. Seguridad</h2>
@@ -427,6 +495,188 @@ async function saveProgress(){const t=getToken();if(!t||!currentChapter)return;t
 async function showProfile(){const t=getToken();if(!t){showPage('authPage');return;}try{const res=await fetch(`${API}/usuarios/perfil`,{headers:{'Authorization':'Bearer '+t}});const u=await res.json();document.getElementById('profileContent').innerHTML=`<div class="profile-field"><span class="lbl">Nombre</span><span>${u.nombre}</span></div><div class="profile-field"><span class="lbl">Correo</span><span>${u.correo}</span></div><div class="profile-field"><span class="lbl">Miembro desde</span><span>${new Date(u.fecha_registro).toLocaleDateString('es-MX')}</span></div><br/><button class="btn-acc" onclick="logout()">Cerrar sesión</button>`;showPage('profilePage');}catch{toast('Error al cargar perfil');}}
 
 async function showFavs(){const t=getToken();if(!t){showPage('authPage');return;}showPage('favsPage');try{const res=await fetch(`${API}/usuarios/favoritos`,{headers:{'Authorization':'Bearer '+t}});const f=await res.json();const g=document.getElementById('favsGrid');if(!f.length){g.innerHTML='<div class="empty">No tienes favoritos aún</div>';return;}g.innerHTML=f.map(m=>`<div class="card" onclick="openManga(${m.id})"><img src="${m.portada_url||''}" alt="${m.titulo}" onerror="this.src='https://via.placeholder.com/160x220/1a1a1a/e94560?text=Sin+portada'"/><div class="card-info"><h3>${m.titulo}</h3><p>${m.autor||''}</p><span class="badge ${m.estado}">${m.estado==='en_curso'?'En curso':'Finalizado'}</span></div></div>`).join('');}catch{document.getElementById('favsGrid').innerHTML='<div class="empty">Error al cargar favoritos</div>';}}
+
+/* ---------------------------------------------------------------------------
+   Foro de la comunidad
+   --------------------------------------------------------------------------- */
+
+let temasForo=[],temaActivo=null,publicacionActual=null,buscarTimer=null;
+
+/* El resto de la aplicación interpola en innerHTML datos que vienen del catálogo
+   y que nadie de fuera controla. En el foro el texto lo escribe cualquier
+   persona registrada, así que todo lo que venga de la API se escapa antes de
+   pintarlo: sin esto, un título con una etiqueta script se ejecutaría en el
+   navegador de quien lo lea. */
+function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fechaCorta(f){try{return new Date(f).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'});}catch{return '';}}
+function recortar(t,n){const s=String(t||'').replace(/\s+/g,' ');return s.length>n?s.slice(0,n)+'…':s;}
+function cabecerasAuth(){const t=getToken();return t?{'Authorization':'Bearer '+t}:{};}
+
+async function showForo(){showPage('foroPage');if(!temasForo.length)await cargarTemas();cargarPublicaciones();}
+
+async function cargarTemas(){
+  try{
+    const res=await fetch(`${API}/foro/temas`);
+    temasForo=await res.json();
+    renderTemas();
+    document.getElementById('nuevoTema').innerHTML=temasForo.map(t=>`<option value="${esc(t.slug)}">${esc(t.icono)} ${esc(t.nombre)}</option>`).join('');
+  }catch{document.getElementById('temasRow').innerHTML='<div class="empty">No se pudieron cargar los temas</div>';}
+}
+
+function renderTemas(){
+  document.getElementById('temasRow').innerHTML=temasForo.map(t=>`
+    <div class="tema-card ${temaActivo===t.slug?'active':''}" onclick="filtrarTema('${esc(t.slug)}')">
+      <div class="ic">${esc(t.icono)}</div>
+      <h4>${esc(t.nombre)}</h4>
+      <p>${esc(t.descripcion)}</p>
+      <div class="cnt">${t.publicaciones} ${t.publicaciones===1?'publicación':'publicaciones'}</div>
+    </div>`).join('');
+}
+
+/* Volver a pulsar el tema activo quita el filtro, para no obligar a buscar un
+   botón de "todos" separado. */
+function filtrarTema(slug){temaActivo=temaActivo===slug?null:slug;renderTemas();cargarPublicaciones();}
+
+/* La búsqueda espera a que la persona deje de escribir en lugar de pedir al
+   servidor una consulta por tecla pulsada. */
+function buscarEnForo(){clearTimeout(buscarTimer);buscarTimer=setTimeout(cargarPublicaciones,300);}
+
+async function cargarPublicaciones(){
+  const lista=document.getElementById('postList');
+  const params=new URLSearchParams();
+  const q=document.getElementById('foroSearch').value.trim();
+  if(temaActivo)params.set('tema',temaActivo);
+  if(q)params.set('buscar',q);
+  params.set('orden',document.getElementById('foroOrden').value);
+  try{
+    const res=await fetch(`${API}/foro/publicaciones?${params}`);
+    const posts=await res.json();
+    if(!res.ok){lista.innerHTML=`<div class="empty">${esc(posts.error||'No se pudo cargar el foro')}</div>`;return;}
+    const tema=temasForo.find(t=>t.slug===temaActivo);
+    document.getElementById('foroListTitle').textContent=`${tema?tema.nombre:'Todas las publicaciones'} (${posts.length})`;
+    if(!posts.length){lista.innerHTML='<div class="empty">No hay publicaciones que coincidan con tu búsqueda</div>';return;}
+    lista.innerHTML=posts.map(p=>`
+      <div class="post-item" onclick="abrirPublicacion(${p.id})">
+        <h3>${esc(p.titulo)}</h3>
+        <div class="excerpt">${esc(recortar(p.cuerpo,180))}</div>
+        <div class="post-meta">
+          <span class="tema-badge">${esc(p.tema_icono)} ${esc(p.tema_nombre)}</span>
+          <span>por ${esc(p.autor)}</span>
+          <span>${fechaCorta(p.fecha)}</span>
+          <span>💬 ${p.comentarios}</span>
+          <span>👁 ${p.vistas}</span>
+          <span>👍 ${p.likes}</span>
+          <span>👎 ${p.dislikes}</span>
+        </div>
+      </div>`).join('');
+  }catch{lista.innerHTML='<div class="empty">No se pudo conectar al servidor</div>';}
+}
+
+async function abrirPublicacion(id){
+  try{
+    const res=await fetch(`${API}/foro/publicaciones/${id}`,{headers:cabecerasAuth()});
+    const data=await res.json();
+    if(!res.ok){toast(data.error||'No se pudo abrir la publicación');return;}
+    publicacionActual=data;
+    renderPublicacion();
+    showPage('postPage');
+  }catch{toast('No se pudo conectar al servidor');}
+}
+
+function renderPublicacion(){
+  const p=publicacionActual;
+  const sesion=JSON.parse(localStorage.getItem('user')||'null');
+  document.getElementById('postContent').innerHTML=`
+    <button class="btn-out" onclick="showForo()" style="padding:6px 14px;font-size:13px;margin-bottom:18px;">← Volver al foro</button>
+    <div><span class="tema-badge">${esc(p.tema_icono)} ${esc(p.tema_nombre)}</span></div>
+    <h1 style="font-size:22px;margin:12px 0 10px;">${esc(p.titulo)}</h1>
+    <div class="post-meta">
+      <span>por ${esc(p.autor)}</span>
+      <span>${fechaCorta(p.fecha)}</span>
+      <span>👁 ${p.vistas} ${p.vistas===1?'persona vio':'personas vieron'} esta publicación</span>
+    </div>
+    <div class="post-body">${esc(p.cuerpo)}</div>
+    <div class="react-row">
+      <button class="react-btn ${p.mi_reaccion===1?'on':''}" onclick="reaccionar(1)">👍 ${p.likes}</button>
+      <button class="react-btn ${p.mi_reaccion===-1?'on':''}" onclick="reaccionar(-1)">👎 ${p.dislikes}</button>
+      <span style="font-size:12px;color:var(--txt3)">${sesion?'Puedes cambiar o retirar tu voto':'Inicia sesión para votar'}</span>
+    </div>
+    <h2 style="font-size:15px;margin-bottom:12px;">Comentarios (${p.comentarios.length})</h2>
+    ${sesion
+      ? `<div class="foro-form"><textarea id="nuevoComentario" placeholder="Escribe un comentario..." maxlength="2000"></textarea><button class="btn-acc" onclick="comentar()">Comentar</button></div>`
+      : `<div class="empty" style="padding:16px">Inicia sesión para participar en la conversación</div>`}
+    <div>${p.comentarios.length
+      ? p.comentarios.map(c=>`<div class="comment"><div class="who">${esc(c.autor)}<span class="when">${fechaCorta(c.fecha)}</span></div><p>${esc(c.cuerpo)}</p></div>`).join('')
+      : '<div class="empty" style="padding:16px">Todavía no hay comentarios. Sé el primero.</div>'}</div>`;
+}
+
+async function reaccionar(valor){
+  const t=getToken();
+  if(!t){toast('Inicia sesión para votar');showPage('authPage');return;}
+  try{
+    const res=await fetch(`${API}/foro/publicaciones/${publicacionActual.id}/reaccion`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},
+      body:JSON.stringify({valor})
+    });
+    const data=await res.json();
+    if(!res.ok){toast(data.error||'No se pudo registrar tu voto');return;}
+    Object.assign(publicacionActual,{likes:data.likes,dislikes:data.dislikes,mi_reaccion:data.mi_reaccion});
+    renderPublicacion();
+  }catch{toast('No se pudo conectar al servidor');}
+}
+
+async function comentar(){
+  const t=getToken();
+  if(!t){showPage('authPage');return;}
+  const cuerpo=document.getElementById('nuevoComentario').value.trim();
+  if(!cuerpo){toast('Escribe algo antes de comentar');return;}
+  try{
+    const res=await fetch(`${API}/foro/publicaciones/${publicacionActual.id}/comentarios`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},
+      body:JSON.stringify({cuerpo})
+    });
+    const data=await res.json();
+    if(!res.ok){toast(data.error||'No se pudo comentar');return;}
+    await abrirPublicacion(publicacionActual.id);
+    toast('Comentario publicado');
+  }catch{toast('No se pudo conectar al servidor');}
+}
+
+function alternarFormulario(){
+  if(!getToken()){toast('Inicia sesión para publicar');showPage('authPage');return;}
+  const f=document.getElementById('foroForm');
+  f.style.display=f.style.display==='none'?'block':'none';
+  if(f.style.display==='block')document.getElementById('nuevoTitulo').focus();
+}
+
+async function publicar(){
+  const t=getToken();
+  if(!t){showPage('authPage');return;}
+  const msg=document.getElementById('foroMsg');
+  const cuerpo={
+    tema:document.getElementById('nuevoTema').value,
+    titulo:document.getElementById('nuevoTitulo').value.trim(),
+    cuerpo:document.getElementById('nuevoCuerpo').value.trim()
+  };
+  try{
+    const res=await fetch(`${API}/foro/publicaciones`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},
+      body:JSON.stringify(cuerpo)
+    });
+    const data=await res.json();
+    if(!res.ok){msg.textContent=data.error||'No se pudo publicar';msg.className='msg error';return;}
+    document.getElementById('nuevoTitulo').value='';
+    document.getElementById('nuevoCuerpo').value='';
+    msg.className='msg';
+    document.getElementById('foroForm').style.display='none';
+    await cargarTemas();
+    toast('Publicación creada');
+    abrirPublicacion(data.id);
+  }catch{msg.textContent='No se pudo conectar al servidor';msg.className='msg error';}
+}
 
 document.addEventListener('keydown',e=>{if(!document.getElementById('readerPage').classList.contains('active'))return;if(e.key==='ArrowLeft')prevPage();if(e.key==='ArrowRight')nextPage();});
 updateNav();loadCatalog();
