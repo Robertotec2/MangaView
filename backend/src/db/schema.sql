@@ -51,9 +51,79 @@ CREATE TABLE IF NOT EXISTS progreso_lectura (
   UNIQUE(usuario_id, capitulo_id)
 );
 
+-- ---------------------------------------------------------------------------
+-- Foro de la comunidad
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS foro_temas (
+  id SERIAL PRIMARY KEY,
+  slug VARCHAR(40) UNIQUE NOT NULL,
+  nombre VARCHAR(80) NOT NULL,
+  descripcion TEXT,
+  icono VARCHAR(8),
+  orden INT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS foro_publicaciones (
+  id SERIAL PRIMARY KEY,
+  tema_id INT NOT NULL REFERENCES foro_temas(id) ON DELETE CASCADE,
+  -- Si se borra la cuenta, la conversación sobrevive sin autor en lugar de
+  -- desaparecer y dejar huecos en los hilos de otras personas.
+  usuario_id INT REFERENCES usuarios(id) ON DELETE SET NULL,
+  titulo VARCHAR(200) NOT NULL,
+  cuerpo TEXT NOT NULL,
+  fecha TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS foro_comentarios (
+  id SERIAL PRIMARY KEY,
+  publicacion_id INT NOT NULL REFERENCES foro_publicaciones(id) ON DELETE CASCADE,
+  usuario_id INT REFERENCES usuarios(id) ON DELETE SET NULL,
+  cuerpo TEXT NOT NULL,
+  fecha TIMESTAMP DEFAULT NOW()
+);
+
+-- Una fila por persona y publicación: el valor 1 es "me gusta" y el -1 es "no
+-- me gusta". La restricción de unicidad es lo que impide votar dos veces, y el
+-- CHECK impide que llegue cualquier otro número por la API.
+CREATE TABLE IF NOT EXISTS foro_reacciones (
+  id SERIAL PRIMARY KEY,
+  publicacion_id INT NOT NULL REFERENCES foro_publicaciones(id) ON DELETE CASCADE,
+  usuario_id INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  valor SMALLINT NOT NULL CHECK (valor IN (-1, 1)),
+  fecha TIMESTAMP DEFAULT NOW(),
+  UNIQUE (publicacion_id, usuario_id)
+);
+
+-- El requisito es mostrar cuántas *personas* vieron la publicación, no cuántas
+-- veces se abrió, así que se guarda una fila por visitante en lugar de un
+-- contador. La huella identifica al visitante sin guardar datos personales:
+-- para una sesión iniciada es su identificador, y para quien navega sin cuenta
+-- es un hash irreversible. Nunca se almacena la IP.
+CREATE TABLE IF NOT EXISTS foro_vistas (
+  id SERIAL PRIMARY KEY,
+  publicacion_id INT NOT NULL REFERENCES foro_publicaciones(id) ON DELETE CASCADE,
+  huella VARCHAR(72) NOT NULL,
+  fecha TIMESTAMP DEFAULT NOW(),
+  UNIQUE (publicacion_id, huella)
+);
+
 -- Claves naturales necesarias para que el seed sea idempotente.
 -- Sin ellas no se puede usar ON CONFLICT y volver a cargar los datos
 -- duplicaría el catálogo, los capítulos y las páginas.
 CREATE UNIQUE INDEX IF NOT EXISTS mangas_titulo_idx ON mangas (titulo);
 CREATE UNIQUE INDEX IF NOT EXISTS capitulos_manga_numero_idx ON capitulos (manga_id, numero);
 CREATE UNIQUE INDEX IF NOT EXISTS paginas_capitulo_orden_idx ON paginas (capitulo_id, orden);
+CREATE UNIQUE INDEX IF NOT EXISTS foro_publicaciones_tema_titulo_idx
+  ON foro_publicaciones (tema_id, titulo);
+
+-- Índices de lectura: el foro se consulta por tema y ordenado por fecha, y las
+-- reacciones, comentarios y vistas se cuentan por publicación en cada listado.
+CREATE INDEX IF NOT EXISTS foro_publicaciones_tema_fecha_idx
+  ON foro_publicaciones (tema_id, fecha DESC);
+CREATE INDEX IF NOT EXISTS foro_comentarios_publicacion_idx
+  ON foro_comentarios (publicacion_id);
+CREATE INDEX IF NOT EXISTS foro_reacciones_publicacion_idx
+  ON foro_reacciones (publicacion_id);
+CREATE INDEX IF NOT EXISTS foro_vistas_publicacion_idx
+  ON foro_vistas (publicacion_id);

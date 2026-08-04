@@ -14,7 +14,15 @@ const db = require('../patterns/DatabaseSingleton');
 const { asegurarBaseDeDatos } = require('./crear-base');
 const { seed } = require('./seed');
 
+// El orden no importa porque el DROP es en cascada, pero la lista tiene que
+// estar completa: una tabla que falte aquí sobrevive con sus datos al reset y
+// deja la base en un estado que no es ni el anterior ni el nuevo.
 const TABLAS = [
+  'foro_vistas',
+  'foro_reacciones',
+  'foro_comentarios',
+  'foro_publicaciones',
+  'foro_temas',
   'progreso_lectura',
   'favoritos',
   'paginas',
