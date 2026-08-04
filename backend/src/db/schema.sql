@@ -1,3 +1,6 @@
+-- Esquema de MangaView — fuente única del DDL.
+-- Todo aquí es idempotente: ejecutarlo N veces deja siempre el mismo resultado.
+
 CREATE TABLE IF NOT EXISTS usuarios (
   id SERIAL PRIMARY KEY,
   nombre VARCHAR(100) NOT NULL,
@@ -47,3 +50,10 @@ CREATE TABLE IF NOT EXISTS progreso_lectura (
   ultima_actualizacion TIMESTAMP DEFAULT NOW(),
   UNIQUE(usuario_id, capitulo_id)
 );
+
+-- Claves naturales necesarias para que el seed sea idempotente.
+-- Sin ellas no se puede usar ON CONFLICT y volver a cargar los datos
+-- duplicaría el catálogo, los capítulos y las páginas.
+CREATE UNIQUE INDEX IF NOT EXISTS mangas_titulo_idx ON mangas (titulo);
+CREATE UNIQUE INDEX IF NOT EXISTS capitulos_manga_numero_idx ON capitulos (manga_id, numero);
+CREATE UNIQUE INDEX IF NOT EXISTS paginas_capitulo_orden_idx ON paginas (capitulo_id, orden);

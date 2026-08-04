@@ -9,7 +9,7 @@ const usuarioRoutes = require('./routes/usuario.routes');
 const app = express();
 const path = require('path');
 app.use(express.static(path.join(__dirname, '../../frontend')));
-app.use('/covers', express.static(path.join(__dirname, '../src/public/covers')));
+app.use('/covers', express.static(path.join(__dirname, '../public/covers')));
 const PORT = process.env.PORT || 3000;	
 
 app.use(cors());
