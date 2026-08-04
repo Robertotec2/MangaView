@@ -116,7 +116,7 @@ flowchart TB
 
     subgraph servidor["Servidor de aplicación — Node.js, puerto 3000"]
         api["Servidor Web y API REST<br/>[Contenedor: Node.js + Express 4]<br/>Sirve el frontend estático y expone la API REST<br/>bajo /api. Valida tokens JWT, aplica las reglas de<br/>negocio y consulta la base de datos"]
-        scripts["Scripts de aprovisionamiento<br/>[Contenedor: Node.js CLI]<br/>Doce archivos setup.js … setup11.js que crean<br/>las tablas y cargan mangas, capítulos,<br/>páginas y portadas de demostración"]
+        scripts["Scripts de aprovisionamiento<br/>[Contenedor: Node.js CLI]<br/>Once archivos setup.js … setup11.js que crean<br/>las tablas y cargan mangas, capítulos,<br/>páginas y portadas de demostración"]
     end
 
     db[("Base de datos MangaView<br/>[Contenedor: PostgreSQL 5432]<br/>Seis tablas relacionales: usuarios, mangas,<br/>capitulos, paginas, favoritos y progreso_lectura")]
@@ -345,7 +345,7 @@ ocho mangas escritos a mano en el frontend en lugar de vivir en la base de datos
 |----------------------|-----------------------------|--------------------------|
 | MangaView (sistema) | SPA, Servidor Web y API REST, Base de datos PostgreSQL, Scripts de aprovisionamiento | Componentes de la API y componentes de la SPA |
 | Lector registrado | Interactúa con la SPA; su sesión vive en localStorage | Vista de autenticación y middleware `verificarToken` |
-| Administrador de contenido | Ejecuta los Scripts de aprovisionamiento | Los doce archivos `setup*.js` |
+| Administrador de contenido | Ejecuta los Scripts de aprovisionamiento | Los once archivos `setup*.js` |
 | Cloudinary | Sin contenedor asociado, integración pendiente | `config/cloudinary.js`, configurado sin consumidores |
 
 ---
@@ -361,7 +361,7 @@ porque son la entrada directa para la evaluación ATAM y para la actualización 
 2. **Cloudinary está documentado como parte de la arquitectura y configurado en el código**, pero ningún
    controlador lo importa. Las imágenes de páginas apuntan a `via.placeholder.com` y las portadas se
    sirven desde `/covers` o se generan como SVG en el propio servidor.
-3. **Existen doce scripts `setup.js` a `setup11.js`** que cumplen la función de migraciones, con DDL y DML
+3. **Existen once scripts `setup.js` a `setup11.js`** que cumplen la función de migraciones, con DDL y DML
    duplicados entre ellos y respecto a `config/schema.sql`. No hay un orden de ejecución declarado.
 4. **No hay capa de repositorio ni de modelos.** El SQL vive dentro de los controladores, aunque el ADR-03
    declara un estilo en capas.
