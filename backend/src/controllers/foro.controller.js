@@ -1,9 +1,5 @@
 /**
  * Controlador del foro: solo traduce entre HTTP y el servicio.
- *
- * No contiene SQL ni reglas de negocio. Su única decisión propia es de dónde
- * sacar los datos del visitante para contar las vistas, porque eso sí depende
- * de la petición HTTP.
  */
 
 const { foroService } = require('../services/foro.service');
@@ -60,10 +56,44 @@ const crearPublicacion = async (req, res) => {
   }
 };
 
+const editarPublicacion = async (req, res) => {
+  try {
+    res.json(await foroService.editarPublicacion(req.usuario.id, req.params.id, req.body));
+  } catch (err) {
+    responderError(res, err);
+  }
+};
+
+const borrarPublicacion = async (req, res) => {
+  try {
+    await foroService.borrarPublicacion(req.usuario.id, req.params.id);
+    res.json({ mensaje: 'Publicacion eliminada' });
+  } catch (err) {
+    responderError(res, err);
+  }
+};
+
 const comentar = async (req, res) => {
   try {
     const comentario = await foroService.comentar(req.usuario.id, req.params.id, req.body);
     res.status(201).json(comentario);
+  } catch (err) {
+    responderError(res, err);
+  }
+};
+
+const editarComentario = async (req, res) => {
+  try {
+    res.json(await foroService.editarComentario(req.usuario.id, req.params.comentarioId, req.body));
+  } catch (err) {
+    responderError(res, err);
+  }
+};
+
+const borrarComentario = async (req, res) => {
+  try {
+    await foroService.borrarComentario(req.usuario.id, req.params.comentarioId);
+    res.json({ mensaje: 'Comentario eliminado' });
   } catch (err) {
     responderError(res, err);
   }
@@ -77,4 +107,25 @@ const reaccionar = async (req, res) => {
   }
 };
 
-module.exports = { temas, publicaciones, publicacion, crearPublicacion, comentar, reaccionar };
+const reportar = async (req, res) => {
+  try {
+    const reporte = await foroService.reportar(req.usuario.id, req.body);
+    res.status(201).json(reporte);
+  } catch (err) {
+    responderError(res, err);
+  }
+};
+
+module.exports = {
+  temas,
+  publicaciones,
+  publicacion,
+  crearPublicacion,
+  editarPublicacion,
+  borrarPublicacion,
+  comentar,
+  editarComentario,
+  borrarComentario,
+  reaccionar,
+  reportar
+};

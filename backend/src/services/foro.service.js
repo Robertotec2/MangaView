@@ -1,33 +1,22 @@
 /**
  * Lógica de negocio del foro. No conoce Express ni SQL.
- *
- * Se construye con una fábrica que recibe sus dependencias, igual que
- * `usuario.service.js`, para que las pruebas puedan inyectar un repositorio
- * falso y correr sin PostgreSQL.
  */
 
 const crypto = require('crypto');
 
 const foroRepository = require('../repositories/foro.repository');
-const { validarPublicacion, validarComentario } = require('../utils/validadores');
+const {
+  validarPublicacion,
+  validarComentario,
+  validarReporte
+} = require('../utils/validadores');
 const { ErrorDeNegocio } = require('../utils/errores');
 
 const CODIGO_VIOLACION_UNICIDAD = '23505';
-
 const ORDENES_VALIDOS = ['recientes', 'populares'];
 const ME_GUSTA = 1;
 const NO_ME_GUSTA = -1;
 
-/**
- * Identifica a un visitante para contar personas y no visitas.
- *
- * Con la sesión iniciada se usa el identificador de la cuenta, así que la
- * misma persona cuenta una sola vez aunque entre desde varios dispositivos.
- * Sin sesión se calcula un hash de la dirección y del navegador: sirve para no
- * contar diez veces a quien recarga, y es irreversible, así que no queda
- * guardado ningún dato personal. La sal es el secreto del servidor, de modo que
- * la huella tampoco se puede reproducir desde fuera.
- */
 const calcularHuella = ({ usuarioId, ip, agente }) => {
   if (usuarioId) return `u:${usuarioId}`;
 
@@ -47,17 +36,51 @@ const exigirEnteroPositivo = (valor, mensaje) => {
   return numero;
 };
 
+/**
+ * Arma el árbol de comentarios. Solo se permite un nivel de respuestas: si el
+ * padre ya es una respuesta, la nueva cuelga del comentario raíz. Así el hilo
+ * no se convierte en una cascada ilegible.
+ */
+const armarArbolComentarios = (filas) => {
+  const porId = new Map();
+  const raiz = [];
+
+  for (const fila of filas) {
+    porId.set(fila.id, { ...fila, respuestas: [] });
+  }
+
+  for (const fila of filas) {
+    const nodo = porId.get(fila.id);
+    if (fila.padre_id && porId.has(fila.padre_id)) {
+      const padre = porId.get(fila.padre_id);
+      const ancla = padre.padre_id && porId.has(padre.padre_id)
+        ? porId.get(padre.padre_id)
+        : padre;
+      ancla.respuestas.push(nodo);
+    } else {
+      raiz.push(nodo);
+    }
+  }
+
+  return raiz;
+};
+
+const resolverMangaId = async (repositorio, mangaId) => {
+  if (mangaId === undefined || mangaId === null || mangaId === '') return null;
+  const id = exigirEnteroPositivo(mangaId, 'Identificador de manga invalido');
+  if (!(await repositorio.mangaExiste(id))) {
+    throw new ErrorDeNegocio('El manga citado no existe', 404);
+  }
+  return id;
+};
+
 function crearForoService({ repositorio = foroRepository, huellaDe = calcularHuella } = {}) {
 
   const listarTemas = () => repositorio.listarTemas();
 
   const listarPublicaciones = async ({ tema, buscar, orden } = {}) => {
-    // Un orden desconocido no es motivo para rechazar la petición: se cae al
-    // valor por defecto, que es lo que la persona espera ver.
     const ordenamiento = ORDENES_VALIDOS.includes(orden) ? orden : 'recientes';
 
-    // Un tema inexistente devolvería una lista vacía sin explicación, y desde
-    // el buscador es indistinguible de "no hay resultados".
     if (tema && !(await repositorio.buscarTemaPorSlug(tema))) {
       throw new ErrorDeNegocio('El tema no existe', 404);
     }
@@ -69,20 +92,15 @@ function crearForoService({ repositorio = foroRepository, huellaDe = calcularHue
     });
   };
 
-  /**
-   * Devuelve la publicación con sus comentarios y, de paso, deja constancia de
-   * la visita. El registro va antes de leer para que el número que se muestra
-   * incluya a quien lo está viendo en ese momento.
-   */
   const obtenerPublicacion = async (id, visitante = {}) => {
     const publicacionId = exigirEnteroPositivo(id, 'Identificador de publicacion invalido');
 
     const existe = await repositorio.buscarPublicacionPorId(publicacionId);
-    if (!existe) throw new ErrorDeNegocio('La publicacion no existe', 404);
+    if (!existe || existe.borrada) throw new ErrorDeNegocio('La publicacion no existe', 404);
 
     await repositorio.registrarVista(publicacionId, huellaDe(visitante));
 
-    const [publicacion, comentarios] = await Promise.all([
+    const [publicacion, comentariosPlanos] = await Promise.all([
       repositorio.buscarPublicacionPorId(publicacionId),
       repositorio.listarComentarios(publicacionId)
     ]);
@@ -91,13 +109,10 @@ function crearForoService({ repositorio = foroRepository, huellaDe = calcularHue
       ? await repositorio.buscarReaccion(publicacionId, visitante.usuarioId)
       : null;
 
-    // El listado usa `comentarios` como número y aquí hace falta la lista. Se
-    // devuelven con nombres distintos para que ningún cliente tenga que
-    // adivinar qué recibe según el endpoint.
     return {
       ...publicacion,
       total_comentarios: publicacion.comentarios,
-      comentarios,
+      comentarios: armarArbolComentarios(comentariosPlanos),
       mi_reaccion: miReaccion
     };
   };
@@ -109,12 +124,15 @@ function crearForoService({ repositorio = foroRepository, huellaDe = calcularHue
     const tema = await repositorio.buscarTemaPorSlug(datos.tema);
     if (!tema) throw new ErrorDeNegocio('El tema no existe', 404);
 
+    const mangaId = await resolverMangaId(repositorio, datos.mangaId);
+
     try {
       const { id } = await repositorio.crearPublicacion({
         temaId: tema.id,
         usuarioId,
         titulo: datos.titulo.trim(),
-        cuerpo: datos.cuerpo.trim()
+        cuerpo: datos.cuerpo.trim(),
+        mangaId
       });
       return repositorio.buscarPublicacionPorId(id);
     } catch (err) {
@@ -125,21 +143,107 @@ function crearForoService({ repositorio = foroRepository, huellaDe = calcularHue
     }
   };
 
+  const editarPublicacion = async (usuarioId, publicacionId, datos = {}) => {
+    const id = exigirEnteroPositivo(publicacionId, 'Identificador de publicacion invalido');
+    // El tema no se cambia al editar; se pasa uno válido solo para reutilizar
+    // las reglas de longitud de título y cuerpo.
+    const errores = validarPublicacion({
+      tema: 'discusiones',
+      titulo: datos.titulo,
+      cuerpo: datos.cuerpo
+    });
+    if (errores.length) throw new ErrorDeNegocio(errores[0], 400);
+
+    const actual = await repositorio.buscarPublicacionPorId(id);
+    if (!actual || actual.borrada) throw new ErrorDeNegocio('La publicacion no existe', 404);
+    if (actual.usuario_id !== usuarioId) {
+      throw new ErrorDeNegocio('Solo puedes editar tus propias publicaciones', 403);
+    }
+
+    const mangaId = datos.mangaId === undefined
+      ? actual.manga_id
+      : await resolverMangaId(repositorio, datos.mangaId);
+
+    const actualizada = await repositorio.actualizarPublicacion({
+      id,
+      usuarioId,
+      titulo: datos.titulo.trim(),
+      cuerpo: datos.cuerpo.trim(),
+      mangaId
+    });
+    if (!actualizada) throw new ErrorDeNegocio('No se pudo editar la publicacion', 403);
+    return repositorio.buscarPublicacionPorId(id);
+  };
+
+  const borrarPublicacion = async (usuarioId, publicacionId) => {
+    const id = exigirEnteroPositivo(publicacionId, 'Identificador de publicacion invalido');
+    const actual = await repositorio.buscarPublicacionPorId(id);
+    if (!actual || actual.borrada) throw new ErrorDeNegocio('La publicacion no existe', 404);
+    if (actual.usuario_id !== usuarioId) {
+      throw new ErrorDeNegocio('Solo puedes borrar tus propias publicaciones', 403);
+    }
+    await repositorio.borrarPublicacion(id, usuarioId);
+  };
+
   const comentar = async (usuarioId, publicacionId, datos = {}) => {
     const id = exigirEnteroPositivo(publicacionId, 'Identificador de publicacion invalido');
 
     const errores = validarComentario(datos);
     if (errores.length) throw new ErrorDeNegocio(errores[0], 400);
 
-    if (!(await repositorio.buscarPublicacionPorId(id))) {
+    const publicacion = await repositorio.buscarPublicacionPorId(id);
+    if (!publicacion || publicacion.borrada) {
       throw new ErrorDeNegocio('La publicacion no existe', 404);
     }
 
-    return repositorio.crearComentario({
+    let padreId = null;
+    if (datos.padreId !== undefined && datos.padreId !== null && datos.padreId !== '') {
+      padreId = exigirEnteroPositivo(datos.padreId, 'Identificador de comentario invalido');
+      const padre = await repositorio.buscarComentarioPorId(padreId);
+      if (!padre || padre.publicacion_id !== id) {
+        throw new ErrorDeNegocio('El comentario al que respondes no existe', 404);
+      }
+      // Un solo nivel: si responden a una respuesta, cuelga del raíz.
+      if (padre.padre_id) padreId = padre.padre_id;
+    }
+
+    const creado = await repositorio.crearComentario({
       publicacionId: id,
+      usuarioId,
+      cuerpo: datos.cuerpo.trim(),
+      padreId
+    });
+    return repositorio.buscarComentarioPorId(creado.id);
+  };
+
+  const editarComentario = async (usuarioId, comentarioId, datos = {}) => {
+    const id = exigirEnteroPositivo(comentarioId, 'Identificador de comentario invalido');
+    const errores = validarComentario(datos);
+    if (errores.length) throw new ErrorDeNegocio(errores[0], 400);
+
+    const actual = await repositorio.buscarComentarioPorId(id);
+    if (!actual || actual.borrado) throw new ErrorDeNegocio('El comentario no existe', 404);
+    if (actual.usuario_id !== usuarioId) {
+      throw new ErrorDeNegocio('Solo puedes editar tus propios comentarios', 403);
+    }
+
+    const editado = await repositorio.actualizarComentario({
+      id,
       usuarioId,
       cuerpo: datos.cuerpo.trim()
     });
+    if (!editado) throw new ErrorDeNegocio('No se pudo editar el comentario', 403);
+    return repositorio.buscarComentarioPorId(id);
+  };
+
+  const borrarComentario = async (usuarioId, comentarioId) => {
+    const id = exigirEnteroPositivo(comentarioId, 'Identificador de comentario invalido');
+    const actual = await repositorio.buscarComentarioPorId(id);
+    if (!actual || actual.borrado) throw new ErrorDeNegocio('El comentario no existe', 404);
+    if (actual.usuario_id !== usuarioId) {
+      throw new ErrorDeNegocio('Solo puedes borrar tus propios comentarios', 403);
+    }
+    await repositorio.borrarComentario(id, usuarioId);
   };
 
   const reaccionar = async (usuarioId, publicacionId, valor) => {
@@ -150,7 +254,8 @@ function crearForoService({ repositorio = foroRepository, huellaDe = calcularHue
       throw new ErrorDeNegocio('La reaccion solo puede ser 1 o -1', 400);
     }
 
-    if (!(await repositorio.buscarPublicacionPorId(id))) {
+    const publicacion = await repositorio.buscarPublicacionPorId(id);
+    if (!publicacion || publicacion.borrada) {
       throw new ErrorDeNegocio('La publicacion no existe', 404);
     }
 
@@ -160,12 +265,44 @@ function crearForoService({ repositorio = foroRepository, huellaDe = calcularHue
       valor: voto
     });
 
-    const publicacion = await repositorio.buscarPublicacionPorId(id);
+    const actualizada = await repositorio.buscarPublicacionPorId(id);
     return {
       mi_reaccion: reaccion,
-      likes: Number(publicacion.likes),
-      dislikes: Number(publicacion.dislikes)
+      likes: Number(actualizada.likes),
+      dislikes: Number(actualizada.dislikes)
     };
+  };
+
+  const reportar = async (usuarioId, datos = {}) => {
+    const errores = validarReporte(datos);
+    if (errores.length) throw new ErrorDeNegocio(errores[0], 400);
+
+    const tienePublicacion = datos.publicacionId !== undefined && datos.publicacionId !== null && datos.publicacionId !== '';
+    const tieneComentario = datos.comentarioId !== undefined && datos.comentarioId !== null && datos.comentarioId !== '';
+
+    if (tienePublicacion === tieneComentario) {
+      throw new ErrorDeNegocio('El reporte debe apuntar a una publicacion o a un comentario', 400);
+    }
+
+    let publicacionId = null;
+    let comentarioId = null;
+
+    if (tienePublicacion) {
+      publicacionId = exigirEnteroPositivo(datos.publicacionId, 'Identificador de publicacion invalido');
+      const pub = await repositorio.buscarPublicacionPorId(publicacionId);
+      if (!pub || pub.borrada) throw new ErrorDeNegocio('La publicacion no existe', 404);
+    } else {
+      comentarioId = exigirEnteroPositivo(datos.comentarioId, 'Identificador de comentario invalido');
+      const com = await repositorio.buscarComentarioPorId(comentarioId);
+      if (!com || com.borrado) throw new ErrorDeNegocio('El comentario no existe', 404);
+    }
+
+    return repositorio.crearReporte({
+      usuarioId,
+      publicacionId,
+      comentarioId,
+      motivo: datos.motivo.trim()
+    });
   };
 
   return {
@@ -173,8 +310,14 @@ function crearForoService({ repositorio = foroRepository, huellaDe = calcularHue
     listarPublicaciones,
     obtenerPublicacion,
     crearPublicacion,
+    editarPublicacion,
+    borrarPublicacion,
     comentar,
-    reaccionar
+    editarComentario,
+    borrarComentario,
+    reaccionar,
+    reportar,
+    armarArbolComentarios
   };
 }
 
@@ -182,6 +325,7 @@ module.exports = {
   crearForoService,
   foroService: crearForoService(),
   calcularHuella,
+  armarArbolComentarios,
   ME_GUSTA,
   NO_ME_GUSTA,
   ORDENES_VALIDOS
