@@ -84,17 +84,55 @@ const validarComentario = ({ cuerpo } = {}) => {
   return errores;
 };
 
+const ESTADOS_LISTA = ['pendiente', 'leyendo', 'terminado'];
+const LONGITUD_MAXIMA_MOTIVO = 300;
+const LONGITUD_MAXIMA_NOTA = 200;
+
+const validarEstadoLista = (estado) => {
+  if (!ESTADOS_LISTA.includes(estado)) {
+    return ['El estado debe ser pendiente, leyendo o terminado'];
+  }
+  return [];
+};
+
+const validarMarcador = ({ capituloId, pagina } = {}) => {
+  const errores = [];
+  if (!Number.isInteger(Number(capituloId)) || Number(capituloId) <= 0) {
+    errores.push('Identificador de capitulo invalido');
+  }
+  if (!Number.isInteger(Number(pagina)) || Number(pagina) <= 0) {
+    errores.push('La pagina del marcador debe ser un numero positivo');
+  }
+  return errores;
+};
+
+const validarReporte = ({ motivo } = {}) => {
+  const errores = [];
+  if (!esTextoNoVacio(motivo)) {
+    errores.push('Escribe el motivo del reporte');
+  } else if (motivo.trim().length > LONGITUD_MAXIMA_MOTIVO) {
+    errores.push(`El motivo no puede pasar de ${LONGITUD_MAXIMA_MOTIVO} caracteres`);
+  }
+  return errores;
+};
+
 module.exports = {
   validarRegistro,
   validarLogin,
   validarPublicacion,
   validarComentario,
+  validarEstadoLista,
+  validarMarcador,
+  validarReporte,
   esCorreoValido,
   esPasswordValida,
+  ESTADOS_LISTA,
   LONGITUD_MINIMA_PASSWORD,
   LONGITUD_MINIMA_TITULO,
   LONGITUD_MAXIMA_TITULO,
   LONGITUD_MINIMA_CUERPO,
   LONGITUD_MAXIMA_CUERPO,
-  LONGITUD_MAXIMA_COMENTARIO
+  LONGITUD_MAXIMA_COMENTARIO,
+  LONGITUD_MAXIMA_MOTIVO,
+  LONGITUD_MAXIMA_NOTA
 };
