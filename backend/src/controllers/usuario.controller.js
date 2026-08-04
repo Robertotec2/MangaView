@@ -1,67 +1,63 @@
-const pool = require('../config/database');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+/**
+ * Controlador de usuarios: solo traduce entre HTTP y el servicio.
+ *
+ * Ya no contiene SQL, ni hashing, ni emisión de tokens. Tampoco devuelve al
+ * cliente el mensaje interno de PostgreSQL: los errores previstos llegan con su
+ * propio estado y los imprevistos se registran en el servidor y se responden de
+ * forma genérica.
+ */
+
+const { usuarioService } = require('../services/usuario.service');
+const { ErrorDeNegocio } = require('../utils/errores');
+
+const responderError = (res, err) => {
+  if (err instanceof ErrorDeNegocio) {
+    return res.status(err.estado).json({ error: err.message });
+  }
+  console.error('Error inesperado en usuario.controller:', err);
+  return res.status(500).json({ error: 'Error interno del servidor' });
+};
 
 const registro = async (req, res) => {
   try {
-    const { nombre, correo, password } = req.body;
-    const hash = await bcrypt.hash(password, 10);
-    const { rows } = await pool.query(
-      'INSERT INTO usuarios (nombre, correo, password_hash) VALUES ($1, $2, $3) RETURNING id, nombre, correo',
-      [nombre, correo, hash]
-    );
-    res.status(201).json(rows[0]);
+    const usuario = await usuarioService.registrar(req.body);
+    res.status(201).json(usuario);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    responderError(res, err);
   }
 };
 
 const login = async (req, res) => {
   try {
-    const { correo, password } = req.body;
-    const { rows } = await pool.query('SELECT * FROM usuarios WHERE correo = $1', [correo]);
-    if (!rows.length) return res.status(401).json({ error: 'Credenciales incorrectas' });
-
-    const valido = await bcrypt.compare(password, rows[0].password_hash);
-    if (!valido) return res.status(401).json({ error: 'Credenciales incorrectas' });
-
-    const token = jwt.sign({ id: rows[0].id, correo: rows[0].correo }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, usuario: { id: rows[0].id, nombre: rows[0].nombre } });
+    const sesion = await usuarioService.autenticar(req.body);
+    res.json(sesion);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    responderError(res, err);
   }
 };
 
 const perfil = async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT id, nombre, correo, fecha_registro FROM usuarios WHERE id = $1', [req.usuario.id]);
-    res.json(rows[0]);
+    res.json(await usuarioService.obtenerPerfil(req.usuario.id));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    responderError(res, err);
   }
 };
 
 const favoritos = async (req, res) => {
   try {
-    const { rows } = await pool.query(`
-      SELECT m.* FROM mangas m
-      JOIN favoritos f ON f.manga_id = m.id
-      WHERE f.usuario_id = $1`, [req.usuario.id]);
-    res.json(rows);
+    res.json(await usuarioService.listarFavoritos(req.usuario.id));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    responderError(res, err);
   }
 };
 
 const agregarFavorito = async (req, res) => {
   try {
-    await pool.query(
-      'INSERT INTO favoritos (usuario_id, manga_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-      [req.usuario.id, req.params.mangaId]
-    );
+    await usuarioService.agregarFavorito(req.usuario.id, req.params.mangaId);
     res.json({ mensaje: 'Agregado a favoritos' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    responderError(res, err);
   }
 };
 

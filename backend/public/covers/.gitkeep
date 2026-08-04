@@ -1,0 +1,8 @@
+Carpeta servida por Express en la ruta /covers.
+
+Está vacía a propósito. El catálogo usa las portadas generadas por el endpoint
+/api/cover/:titulo, que no dependen de archivos en disco ni de red, para que un
+clon nuevo del repositorio funcione sin pasos adicionales.
+
+Si se colocan aquí imágenes reales de portada, quedan disponibles en /covers/<archivo>
+y basta apuntar mangas.portada_url a esa ruta para que se usen en su lugar.
