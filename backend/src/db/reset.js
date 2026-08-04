@@ -18,11 +18,15 @@ const { seed } = require('./seed');
 // estar completa: una tabla que falte aquí sobrevive con sus datos al reset y
 // deja la base en un estado que no es ni el anterior ni el nuevo.
 const TABLAS = [
+  'foro_reportes',
   'foro_vistas',
   'foro_reacciones',
   'foro_comentarios',
   'foro_publicaciones',
   'foro_temas',
+  'marcadores',
+  'mangas_seguidos',
+  'listas_lectura',
   'progreso_lectura',
   'favoritos',
   'paginas',
