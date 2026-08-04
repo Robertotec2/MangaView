@@ -6,7 +6,7 @@
 | Proyecto | MangaView |
 | Actividad | Actividad #40 — Proyecto: Documentación final y demo |
 | Herramienta | Cursor |
-| Fecha | 03/08/2026 |
+| Fecha | 04/08/2026 |
 
 ---
 
@@ -38,6 +38,7 @@ de código contra el repositorio antes de subirlos.
 | Pruebas unitarias | Escribir los casos y ejecutarlos | Decidir qué probar: las piezas donde una regresión sería silenciosa, en lugar de perseguir un porcentaje de cobertura |
 | Pipeline de CI | Redactar el archivo de GitHub Actions | Decidir que las pruebas no dependan de PostgreSQL para que el pipeline sea rápido y determinista |
 | ADR | Reconstruir el orden real de las decisiones a partir del historial | El razonamiento de cada decisión y las alternativas descartadas |
+| Foro de la comunidad | Escribir el esquema, las cuatro capas del módulo, la interfaz dentro de la SPA y las pruebas; detectar que el C4 seguía dibujando un sistema externo ya eliminado | Decidir contar personas y no aperturas, y hacerlo con una huella hasheada para no contradecir la política de privacidad; derivar los totales de reacciones en lugar de mantener contadores; elegir Spoilers y Ayuda como los temas que faltaban, descartando fan art porque la plataforma no puede mostrar imágenes |
 
 ---
 
@@ -45,7 +46,7 @@ de código contra el repositorio antes de subirlos.
 
 No delegué el criterio arquitectónico. Los puntos donde la evaluación concluyó que **no** había que tocar
 nada —mantener el factor de coste de bcrypt en 10, conservar la autenticación sin estado pese a que impide
-revocar un token, no refactorizar `manga` y `capitulo` antes de la demo— son decisiones tan deliberadas
-como los cambios, y son mías. Tampoco acepté afirmaciones sin comprobarlas: varias observaciones iniciales
+revocar un token, no refactorizar `manga` y `capitulo` antes de la demo, dejar el foro sin moderación en
+lugar de improvisar un sistema de permisos— son decisiones tan deliberadas como los cambios, y son mías. Tampoco acepté afirmaciones sin comprobarlas: varias observaciones iniciales
 sobre el código resultaron inexactas al contrastarlas con el repositorio y se corrigieron antes de quedar
 escritas.

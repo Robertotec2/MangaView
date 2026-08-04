@@ -5,8 +5,32 @@
 Plataforma web para leer manga en español. Proyecto desarrollado para la materia de Arquitectura de
 Software.
 
-Un lector entra sin registrarse, explora el catálogo y lee capítulos. Si se registra, la aplicación
-recuerda sus favoritos y por qué página iba en cada capítulo.
+Un lector entra sin registrarse, explora el catálogo, lee capítulos y consulta el foro. Si se registra, la
+aplicación recuerda sus favoritos y por qué página iba en cada capítulo, y puede participar en el foro:
+publicar, comentar y votar.
+
+## El foro
+
+El foro está dividido en cinco temas —Discusiones, Recomendaciones, Noticias, Spoilers y Ayuda y soporte— y
+permite crear publicaciones, comentarlas, darles me gusta o no me gusta, y buscar por título o contenido.
+Cada publicación muestra **cuántas personas la vieron**, no cuántas veces se abrió: se cuenta un visitante
+una sola vez, usando su cuenta si tiene sesión y un código irreversible si no la tiene, sin almacenar la
+dirección IP. El [ADR-10](ADR-10-Roberto.md) explica ese diseño y por qué se eligieron esos cinco temas.
+
+Leer el foro es público. Publicar, comentar y votar requieren una cuenta.
+
+### Cuentas de demostración
+
+El seed carga ocho cuentas con conversaciones ya escritas para que el foro no aparezca vacío en la demo.
+Todas comparten la contraseña `demo1234`:
+
+```
+akira@demo.mangaview      yuki@demo.mangaview       camila@demo.mangaview
+diego@demo.mangaview      sofia@demo.mangaview      mateo@demo.mangaview
+renata@demo.mangaview     bruno@demo.mangaview
+```
+
+Son cuentas de demostración con un dominio que no existe, no cuentas de uso real.
 
 ## Tecnologías
 
@@ -43,7 +67,7 @@ hay que levantar un segundo servidor para el frontend.
 |---------|----------|
 | `npm run dev` | Levanta la API con recarga automática |
 | `npm start` | Levanta la API sin recarga |
-| `npm run db:setup` | Crea la base de datos si falta, aplica el esquema y carga los datos de demostración. Es idempotente: puedes ejecutarlo las veces que quieras |
+| `npm run db:setup` | Crea la base de datos si falta, aplica el esquema y carga los datos de demostración, catálogo y foro incluidos. Es idempotente: puedes ejecutarlo las veces que quieras |
 | `npm run db:reset` | Borra las tablas y vuelve a crearlas desde cero. Destructivo |
 | `npm test` | Ejecuta las pruebas unitarias |
 
@@ -56,7 +80,7 @@ hay que levantar un segundo servidor para el frontend.
 | [Registro de ADR](docs/ADR-registro.md) | Índice de todas las decisiones, code smells resueltos y estado de la deuda técnica |
 | [Declaración de uso de IA](docs/DECLARACION-IA.md) | En qué se usó IA durante la entrega y qué decisiones son propias |
 
-Los ADR individuales están en la raíz del repositorio, del `ADR-01` al `ADR-09`.
+Los ADR individuales están en la raíz del repositorio, del `ADR-01` al `ADR-10`.
 
 ## Integración continua
 
@@ -74,6 +98,7 @@ PostgreSQL; el ADR-08 explica esa decisión.
 | `patrones-gof` | ADR-04 | Primera implementación de Singleton y Observer |
 | `deuda-tecnica` | ADR-06 | Registro de deuda técnica |
 | `documentacion-final` | ADR-07 + ADR-08 | C4, ATAM, refactorización, pruebas e integración continua |
+| `foro-comunidad` | ADR-10 | Foro: temas, publicaciones, comentarios, reacciones, vistas y buscador |
 | `main` | Todos | Rama integradora |
 
 ## Estructura general

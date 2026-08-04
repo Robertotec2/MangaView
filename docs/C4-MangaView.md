@@ -110,26 +110,25 @@ flowchart TB
     admin["Administrador de contenido<br/>[Persona]"]
 
     subgraph navegador["Navegador del lector"]
-        spa["SPA MangaView<br/>[Contenedor: HTML + CSS + JavaScript vanilla]<br/>Archivo único frontend/index.html.<br/>Navegación por páginas mostrando y ocultando<br/>secciones, catálogo con búsqueda y filtros por tema,<br/>login y registro, detalle de manga, lector de<br/>páginas con teclado, favoritos, perfil y modo oscuro"]
+        spa["SPA MangaView<br/>[Contenedor: HTML + CSS + JavaScript vanilla]<br/>Archivo único frontend/index.html.<br/>Navegación por páginas mostrando y ocultando<br/>secciones, catálogo con búsqueda y filtros por tema,<br/>login y registro, detalle de manga, lector de<br/>páginas con teclado, foro de la comunidad,<br/>favoritos, perfil y modo oscuro"]
         storage[("localStorage<br/>[Contenedor: almacenamiento del navegador]<br/>Guarda el token JWT y los datos<br/>del usuario para mantener la sesión")]
     end
 
     subgraph servidor["Servidor de aplicación — Node.js, puerto 3000"]
         api["Servidor Web y API REST<br/>[Contenedor: Node.js + Express 4]<br/>Sirve el frontend estático y expone la API REST<br/>bajo /api. Valida tokens JWT, aplica las reglas de<br/>negocio y consulta la base de datos"]
-        scripts["Seed de aprovisionamiento<br/>[Contenedor: Node.js CLI]<br/>db/seed.js crea la base si falta, aplica el esquema<br/>y carga los datos de demostración en una transacción<br/>idempotente: 8 mangas, 9 capítulos y 16 páginas.<br/>db/reset.js reconstruye la base desde cero"]
+        scripts["Seed de aprovisionamiento<br/>[Contenedor: Node.js CLI]<br/>db/seed.js crea la base si falta, aplica el esquema<br/>y carga los datos de demostración en una transacción<br/>idempotente: 8 mangas, 9 capítulos, 16 páginas y<br/>el foro con 5 temas y 10 publicaciones.<br/>db/reset.js reconstruye la base desde cero"]
     end
 
-    db[("Base de datos MangaView<br/>[Contenedor: PostgreSQL 5432]<br/>Seis tablas relacionales: usuarios, mangas,<br/>capitulos, paginas, favoritos y progreso_lectura")]
+    db[("Base de datos MangaView<br/>[Contenedor: PostgreSQL 5432]<br/>Once tablas relacionales: usuarios, mangas,<br/>capitulos, paginas, favoritos, progreso_lectura<br/>y las cinco del foro: foro_temas,<br/>foro_publicaciones, foro_comentarios,<br/>foro_reacciones y foro_vistas")]
 
-    placeholder["via.placeholder.com<br/>[Sistema externo]"]
     legacy["Frontend React heredado<br/>[Contenedor no desplegado]<br/>App.tsx, Home.tsx, Lector.tsx y api.ts.<br/>Fue reemplazado por la SPA vanilla según el ADR-05<br/>y hoy no forma parte de la aplicación en ejecución"]
 
     lector -->|"Usa la aplicación"| spa
     spa -->|"Lee y escribe el token de sesión"| storage
     api -->|"Entrega index.html y los recursos<br/>estáticos mediante express.static"| spa
-    spa -->|"Consume JSON: /api/mangas, /api/capitulos,<br/>/api/usuarios — con cabecera Bearer<br/>en las rutas protegidas"| api
+    spa -->|"Consume JSON: /api/mangas, /api/capitulos,<br/>/api/usuarios, /api/foro — con cabecera Bearer<br/>en las rutas protegidas"| api
     spa -->|"Solicita portadas: archivos en /covers<br/>y SVG generados en /api/cover/:titulo"| api
-    spa -->|"Descarga las imágenes de cada página"| placeholder
+    spa -->|"Solicita las páginas del lector generadas<br/>en /api/page/:titulo/:capitulo/:orden"| api
     api -->|"Consulta y actualiza mediante SQL<br/>sobre un pool de conexiones pg"| db
     admin -->|"Ejecuta npm run db:setup"| scripts
     scripts -->|"Aplica schema.sql e inserta los datos<br/>con SQL, usando ON CONFLICT"| db
@@ -138,12 +137,10 @@ flowchart TB
     classDef persona fill:#08427b,stroke:#052e56,color:#ffffff
     classDef contenedor fill:#438dd5,stroke:#2e6295,color:#ffffff
     classDef datos fill:#438dd5,stroke:#2e6295,color:#ffffff
-    classDef externo fill:#999999,stroke:#6b6b6b,color:#ffffff
     classDef muerto fill:#b0b0b0,stroke:#6b6b6b,color:#ffffff,stroke-dasharray: 5 5
     class lector,admin persona
     class spa,api,scripts contenedor
     class storage,db datos
-    class placeholder externo
     class legacy muerto
     style navegador fill:#f7f7f7,stroke:#bbbbbb
     style servidor fill:#f7f7f7,stroke:#bbbbbb
@@ -189,31 +186,35 @@ flowchart TB
             rUsers["usuario.routes.js<br/>[Componente: Express Router]<br/>POST /registro, POST /login públicas<br/>GET /perfil, GET y POST /favoritos protegidas"]
             rCover["cover.routes.js<br/>[Componente: Express Router]<br/>GET /:titulo devuelve la portada<br/>generada como image/svg+xml"]
             rPagina["pagina.routes.js<br/>[Componente: Express Router]<br/>GET /:titulo/:capitulo/:orden devuelve la<br/>página del lector como image/svg+xml"]
+            rForo["foro.routes.js<br/>[Componente: Express Router]<br/>GET /temas y /publicaciones públicas<br/>POST /publicaciones, /:id/comentarios<br/>y /:id/reaccion protegidas"]
         end
 
-        auth["auth.js — verificarToken<br/>[Componente: middleware Express]<br/>Extrae el Bearer de la cabecera Authorization,<br/>verifica la firma del JWT y coloca el usuario<br/>decodificado en req.usuario"]
+        auth["auth.js — verificarToken e identificarUsuario<br/>[Componente: middleware Express]<br/>verificarToken exige un JWT válido y corta con 401.<br/>identificarUsuario lo lee si viene y deja pasar<br/>igual, para las rutas públicas del foro que<br/>cambian según quién mire"]
 
         subgraph capaControl["Capa de controladores — solo traducen HTTP"]
             cManga["manga.controller.js<br/>[Componente]<br/>getAll, getById, getByGenero.<br/>Todavía escribe su propio SQL"]
             cCap["capitulo.controller.js<br/>[Componente]<br/>getByManga, getById, guardarProgreso.<br/>Todavía escribe su propio SQL y emite<br/>el evento de progreso"]
             cUser["usuario.controller.js<br/>[Componente]<br/>registro, login, perfil, favoritos,<br/>agregarFavorito. Delega todo al servicio<br/>y traduce los errores a códigos HTTP"]
+            cForo["foro.controller.js<br/>[Componente]<br/>temas, publicaciones, publicacion, crear,<br/>comentar y reaccionar. Delega todo al servicio;<br/>lo único propio es extraer de la petición<br/>los datos del visitante"]
         end
 
         subgraph capaServicios["Capa de servicios — lógica de negocio"]
             sUser["usuario.service.js<br/>[Componente: fábrica con inyección]<br/>Valida, hashea contraseñas, emite tokens y<br/>traduce fallos a ErrorDeNegocio. Recibe sus<br/>dependencias, así que se prueba sin base de datos"]
             sCover["cover.service.js<br/>[Componente: función pura]<br/>generarPortadaSVG: título a SVG, con paleta<br/>por título y escapado de caracteres XML"]
             sPagina["pagina.service.js<br/>[Componente: función pura]<br/>generarPaginaSVG: maqueta de viñetas elegida<br/>según el número de página. Reutiliza la paleta<br/>y el escapado del servicio de portadas"]
+            sForo["foro.service.js<br/>[Componente: fábrica con inyección]<br/>Valida, resuelve el tema, alterna reacciones y<br/>calcula la huella del visitante con SHA-256 para<br/>contar personas sin guardar la IP"]
         end
 
         subgraph capaDatos["Capa de acceso a datos"]
             rUserRepo["usuario.repository.js<br/>[Componente: Repository]<br/>Único lugar con SQL de usuarios y favoritos"]
+            rForoRepo["foro.repository.js<br/>[Componente: Repository]<br/>Único lugar con SQL del foro. Filtros y búsqueda<br/>siempre por parámetros, nunca concatenados"]
             singleton["patterns/DatabaseSingleton.js<br/>[Componente: patrón Singleton]<br/>Pool único de conexiones compartido por<br/>controladores, repositorios y el seed"]
         end
 
         observer["patterns/ProgresoObserver.js<br/>[Componente: patrón Observer]<br/>Emite el evento de progreso guardado a los<br/>observers de log y de estadísticas, sin que<br/>el controlador los conozca"]
 
         subgraph utils["Utilidades compartidas"]
-            validadores["utils/validadores.js<br/>[Componente: funciones puras]<br/>Reglas de correo y de contraseña"]
+            validadores["utils/validadores.js<br/>[Componente: funciones puras]<br/>Reglas de correo, de contraseña y de longitud<br/>de las publicaciones y comentarios del foro"]
             errores["utils/errores.js<br/>[Componente]<br/>ErrorDeNegocio con su estado HTTP"]
         end
 
@@ -230,28 +231,38 @@ flowchart TB
     bootstrap -->|"Monta en /api/usuarios"| rUsers
     bootstrap -->|"Monta en /api/cover"| rCover
     bootstrap -->|"Monta en /api/page"| rPagina
+    bootstrap -->|"Monta en /api/foro"| rForo
 
     rCaps -->|"Protege POST /:id/progreso"| auth
     rUsers -->|"Protege perfil y favoritos"| auth
+    rForo -->|"Protege publicar, comentar y reaccionar;<br/>identifica sin exigir sesión en el detalle"| auth
     auth -->|"Continúa con next() si el token es válido"| cCap
     auth -->|"Continúa con next() si el token es válido"| cUser
+    auth -->|"Continúa con next() con o sin sesión<br/>según la ruta"| cForo
 
     rMangas --> cManga
     rCaps --> cCap
     rUsers --> cUser
     rCover --> sCover
     rPagina --> sPagina
+    rForo --> cForo
     sPagina -->|"Reutiliza paleta y escapado XML"| sCover
 
     cUser -->|"Delega la lógica de negocio"| sUser
+    cForo -->|"Delega la lógica de negocio"| sForo
     sUser -->|"Aplica las reglas de entrada"| validadores
+    sForo -->|"Aplica las reglas de entrada"| validadores
     sUser -->|"Lanza y propaga"| errores
+    sForo -->|"Lanza y propaga"| errores
     cUser -->|"Traduce a código HTTP"| errores
+    cForo -->|"Traduce a código HTTP"| errores
     sUser -->|"Consulta y persiste"| rUserRepo
+    sForo -->|"Consulta y persiste"| rForoRepo
 
     cManga -->|"SQL embebido, deuda pendiente"| singleton
     cCap -->|"SQL embebido, deuda pendiente"| singleton
     rUserRepo --> singleton
+    rForoRepo --> singleton
     singleton -->|"Protocolo pg sobre TCP 5432"| db
 
     cCap -->|"emit del progreso guardado"| observer
@@ -266,7 +277,7 @@ flowchart TB
     classDef externo fill:#999999,stroke:#6b6b6b,color:#ffffff
     classDef inactivo fill:#cccccc,stroke:#8a8a8a,color:#000000,stroke-dasharray: 5 5
     class spa,db contenedor
-    class bootstrap,rMangas,rCaps,rUsers,rCover,rPagina,auth,cManga,cCap,cUser,sUser,sCover,sPagina,rUserRepo,validadores,errores componente
+    class bootstrap,rMangas,rCaps,rUsers,rCover,rPagina,rForo,auth,cManga,cCap,cUser,cForo,sUser,sCover,sPagina,sForo,rUserRepo,rForoRepo,validadores,errores componente
     class singleton,observer patron
     class cloudcfg inactivo
     class libBcrypt,libJwt externo
@@ -280,10 +291,18 @@ flowchart TB
 
 ### Lectura del diagrama
 
-El flujo de una petición sigue el estilo en capas declarado en el ADR-03, y en el módulo de usuarios ese
-estilo ya está completo: `index.js` → router → middleware de autenticación si la ruta es protegida →
+El flujo de una petición sigue el estilo en capas declarado en el ADR-03, y en los módulos de usuarios y de
+foro ese estilo ya está completo: `index.js` → router → middleware de autenticación si la ruta lo requiere →
 controlador → servicio → repositorio → `DatabaseSingleton` → PostgreSQL. Cada eslabón tiene una sola
 razón para cambiar.
+
+El módulo del **foro** es el primero que nace con las capas ya puestas en lugar de llegar a ellas
+refactorizando, y por eso conviene mirarlo como referencia de a dónde deberían llegar los otros dos
+controladores. Tiene además un detalle de diseño que no aparece en el resto: el middleware `auth.js` expone
+dos funciones distintas, porque el foro necesita rutas que son públicas y aun así cambian según quién mire.
+`identificarUsuario` lee el token si viene y deja pasar igual cuando no hay ninguno o cuando está vencido;
+lo que nunca hace es conceder identidad con un token inválido, y hay pruebas unitarias que fijan justo esa
+distinción.
 
 Los dos patrones GOF documentados en el ADR-04 aparecen aquí en azul más intenso, porque son decisiones de
 diseño explícitas y no simples archivos: el **Singleton** es el punto único por el que pasa todo el
@@ -328,18 +347,20 @@ flowchart LR
             vDetalle["Vista de detalle<br/>[Componente]<br/>openManga y toggleFav. Combina los datos<br/>de la API con el diccionario MANGA_EXTRA<br/>de metadatos escritos en el propio archivo"]
             vLector["Vista de lector<br/>[Componente]<br/>openChapter, renderReader, prevPage,<br/>nextPage, updateReaderPage y saveProgress.<br/>Navegación por clic en zonas y por teclado"]
             vPerfil["Vistas de perfil y favoritos<br/>[Componente]<br/>showProfile y showFavs"]
+            vForo["Vista de foro<br/>[Componente]<br/>showForo, cargarTemas, renderTemas,<br/>filtrarTema, buscarEnForo y cargarPublicaciones.<br/>Filtra y busca en el servidor, con espera de<br/>300 ms para no consultar por tecla pulsada"]
+            vPost["Vista de publicación<br/>[Componente]<br/>abrirPublicacion, renderPublicacion,<br/>reaccionar, comentar, alternarFormulario<br/>y publicar"]
         end
 
         subgraph compartido["Estado y utilidades compartidas"]
             direction TB
-            estado["Estado global<br/>[Componente: variables de módulo]<br/>mangas, currentGenre, authMode,<br/>currentChapter, currentPage, isDark<br/>y la constante API con la URL del backend"]
+            estado["Estado global<br/>[Componente: variables de módulo]<br/>mangas, currentGenre, authMode,<br/>currentChapter, currentPage, isDark,<br/>temasForo, temaActivo, publicacionActual<br/>y la constante API con la URL del backend"]
             toast["Notificaciones<br/>[Componente]<br/>toast, mensajes temporales al usuario"]
+            escape["Escapado de contenido<br/>[Componente: función pura]<br/>esc, fechaCorta y recortar. Todo lo que<br/>escribe un usuario pasa por esc antes de<br/>llegar a innerHTML"]
         end
     end
 
     api["Servidor Web y API REST<br/>[Contenedor]"]
     storage[("localStorage<br/>[Contenedor]")]
-    placeholder["via.placeholder.com<br/>[Sistema externo]"]
 
     router --> vistas
 
@@ -348,23 +369,26 @@ flowchart LR
     vDetalle -->|"fetch GET /mangas/:id<br/>y /capitulos/manga/:id<br/>fetch POST /usuarios/favoritos/:id"| api
     vLector -->|"fetch GET /capitulos/:id<br/>fetch POST /capitulos/:id/progreso"| api
     vPerfil -->|"fetch GET /usuarios/perfil<br/>y /usuarios/favoritos"| api
+    vForo -->|"fetch GET /foro/temas<br/>y /foro/publicaciones con tema,<br/>buscar y orden"| api
+    vPost -->|"fetch GET /foro/publicaciones/:id<br/>fetch POST de publicación,<br/>comentario y reacción"| api
 
     vAuth -->|"Guarda y borra el token"| storage
     vLector -->|"Lee el token para autorizar"| storage
     vPerfil -->|"Lee el token para autorizar"| storage
-    vLector -->|"Carga la imagen de cada página"| placeholder
+    vPost -->|"Lee el token para publicar,<br/>comentar y reaccionar"| storage
+    vLector -->|"Solicita la imagen generada<br/>de cada página"| api
 
     vCatalogo --> compartido
     vDetalle --> compartido
     vLector --> compartido
     vAuth --> compartido
+    vForo --> compartido
+    vPost --> compartido
 
     classDef contenedor fill:#438dd5,stroke:#2e6295,color:#ffffff
     classDef componente fill:#85bbf0,stroke:#5d82a8,color:#000000
-    classDef externo fill:#999999,stroke:#6b6b6b,color:#ffffff
     class api,storage contenedor
-    class estado,router,vAuth,vCatalogo,vDetalle,vLector,vPerfil,toast componente
-    class placeholder externo
+    class estado,router,vAuth,vCatalogo,vDetalle,vLector,vPerfil,vForo,vPost,toast,escape componente
     style spac fill:#f7f7f7,stroke:#bbbbbb
     style vistas fill:#eef4fa,stroke:#c3d5e6
     style compartido fill:#eef4fa,stroke:#c3d5e6
@@ -381,6 +405,14 @@ Dos elementos del diagrama son puntos de atención: la constante `API` está fij
 `http://localhost:3000/api` dentro del archivo, y el diccionario `MANGA_EXTRA` contiene metadatos de los
 ocho mangas escritos a mano en el frontend en lugar de vivir en la base de datos.
 
+El foro rompe el patrón del catálogo en dos puntos, y los dos son deliberados. El primero es que **filtra y
+busca en el servidor** en lugar de en memoria: el catálogo son ocho títulos que caben de sobra en el
+cliente, mientras que las publicaciones crecen sin techo y descargarlas todas para filtrarlas en el
+navegador dejaría de funcionar pronto. El segundo es el componente de **escapado**: el resto de la
+aplicación interpola en `innerHTML` datos del catálogo, que nadie de fuera controla, pero en el foro el
+texto lo escribe cualquier persona registrada, así que todo lo que llega de la API pasa por `esc` antes de
+pintarse. Sin eso, un título con una etiqueta `script` se ejecutaría en el navegador de quien lo lea.
+
 ---
 
 ## Trazabilidad entre niveles
@@ -389,7 +421,8 @@ ocho mangas escritos a mano en el frontend en lugar de vivir en la base de datos
 |----------------------|-----------------------------|--------------------------|
 | MangaView (sistema) | SPA, Servidor Web y API REST, Base de datos PostgreSQL, Seed de aprovisionamiento | Componentes de la API y componentes de la SPA |
 | Lector registrado | Interactúa con la SPA; su sesión vive en localStorage | Vista de autenticación, middleware `verificarToken` y `usuario.service.js` |
-| Administrador de contenido | Ejecuta el Seed de aprovisionamiento | `db/seed.js`, `db/reset.js`, `db/crear-base.js` y `db/datos-demo.js` |
+| Lector que participa en el foro | Publica, comenta y reacciona desde la SPA | Vistas de foro y de publicación, `identificarUsuario`, `foro.service.js` y `foro.repository.js` |
+| Administrador de contenido | Ejecuta el Seed de aprovisionamiento | `db/seed.js`, `db/reset.js`, `db/crear-base.js`, `db/datos-demo.js` y `db/datos-foro.js` |
 | Cloudinary | Sin contenedor asociado, integración pendiente | `config/cloudinary.js`, configurado sin consumidores |
 
 ---
@@ -412,6 +445,8 @@ estado actual. Este documento describe la arquitectura viva: si algo se resuelve
 | 8 | Los patrones GOF del ADR-04 estaban implementados solo en la rama `patrones-gof`, sin fusionar | **Resuelto** — `DatabaseSingleton` y `ProgresoObserver` integrados en la línea principal |
 | 9 | El lector no mostraba las páginas: nunca creaba el elemento de imagen y las URL apuntaban a un servicio externo caído | **Resuelto** — `pagina.service.js` las genera en el servidor y el lector las muestra |
 | 10 | El aprovisionamiento se conectaba a una base de datos que no creaba, así que fallaba sobre una instalación limpia | **Resuelto** — `db/crear-base.js`, invocado por el seed y por el reset |
+| 11 | El Nivel 2 seguía dibujando `via.placeholder.com` como sistema externo después de que el ADR-09 lo eliminara del código | **Resuelto** — se detectó al documentar el foro y se corrigió en este mismo documento |
+| 12 | La SPA interpolaba en `innerHTML` sin escapar, aceptable mientras todo el contenido venía del catálogo | **Resuelto para el contenido de usuario** — el foro escapa con `esc`; el catálogo sigue interpolando directo |
 
 ---
 

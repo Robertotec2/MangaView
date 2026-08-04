@@ -36,6 +36,7 @@ evolucionó el pensamiento del proyecto.
 | [ADR-07](../ADR-07-Roberto.md) | 03/08/2026 | Documentación C4 como código, evaluación ATAM y refactorización | `Aceptado` | `docs/`, `backend/src/db/`, `backend/src/services/` |
 | [ADR-08](../ADR-08-Roberto.md) | 03/08/2026 | Pruebas unitarias sin base de datos e integración continua | `Aceptado` | `backend/tests/`, `.github/workflows/ci.yml` |
 | [ADR-09](../ADR-09-Roberto.md) | 04/08/2026 | Páginas generadas por el servidor y creación automática de la base de datos | `Aceptado` | `backend/src/services/pagina.service.js`, `backend/src/db/crear-base.js` |
+| [ADR-10](../ADR-10-Roberto.md) | 04/08/2026 | Foro de la comunidad: vistas por persona, reacciones derivadas y módulo en capas desde el origen | `Aceptado` | `backend/src/{routes,controllers,services,repositories}/foro.*`, `frontend/index.html` |
 
 Documentos de apoyo que no son ADR pero sostienen las decisiones del ADR-07 y del ADR-08:
 
@@ -56,19 +57,21 @@ flowchart LR
     u5["ADR-07<br/>03/08/2026<br/>C4, ATAM y<br/>refactorizacion"]
     u6["ADR-08<br/>03/08/2026<br/>Pruebas e<br/>integracion continua"]
     u7["ADR-09<br/>04/08/2026<br/>Paginas del lector y<br/>creacion de la base"]
+    u8["ADR-10<br/>04/08/2026<br/>Foro de la<br/>comunidad"]
 
-    u1 --> u2 --> u3 --> u4 --> u5 --> u6 --> u7
+    u1 --> u2 --> u3 --> u4 --> u5 --> u6 --> u7 --> u8
 
     u3 -.->|"Deja obsoleto el frontend<br/>React del ADR-01"| u1
     u5 -.->|"Lleva a main los patrones<br/>que documentaba"| u2
     u5 -.->|"Paga la deuda 2"| u4
     u5 -.->|"Hace testeable el codigo"| u6
     u7 -.->|"Paga dos deudas que<br/>habia dejado abiertas"| u5
+    u8 -.->|"Primer modulo que nace<br/>con las capas puestas"| u5
 
     classDef pasado fill:#85bbf0,stroke:#5d82a8,color:#000000
     classDef actual fill:#08427b,stroke:#052e56,color:#ffffff
     class u1,u2,u3,u4 pasado
-    class u5,u6,u7 actual
+    class u5,u6,u7,u8 actual
 ```
 
 ---
@@ -88,6 +91,7 @@ sirve ese nivel.
 | **Código muerto** | El proyecto React de `frontend/src/` no se ejecuta desde el ADR-05; `config/cloudinary.js` no lo importa nadie | Documentado como deuda abierta, no eliminado, para no borrar la evidencia del camino recorrido | ADR-07 |
 | **Datos muertos** | El campo `abreviatura` de los datos de demostración solo servía para construir la URL externa de las páginas | Eliminado al pasar la generación de páginas al servidor, que usa el título real | ADR-09 |
 | **Números mágicos** | El factor de coste de bcrypt y la vida del token estaban escritos dentro de las llamadas a función | Externalizados a `BCRYPT_ROUNDS` y `JWT_EXPIRES_IN`, documentados en `.env.example` con su efecto | ADR-07 |
+| **Documentación desactualizada** | El Nivel 2 del C4 seguía dibujando `via.placeholder.com` como sistema externo después de que el ADR-09 lo eliminara del código | Corregido al documentar el foro. Es el olor más fácil de dejar pasar, porque no rompe nada al ejecutarse | ADR-10 |
 
 ---
 
@@ -108,6 +112,10 @@ sirve ese nivel.
 | `MANGA_EXTRA` acoplado al id numérico del manga | Hallazgo del ADR-07 | **Abierta** |
 | URL de la API escrita en el frontend | ATAM, nota de fidelidad 7 | **Abierta** |
 | El lector no precarga la página siguiente | Hallazgo del ADR-09 | **Abierta** |
+| El foro no tiene moderación: no se puede editar, borrar ni reportar | ADR-10 | **Abierta** — es lo primero que necesitaría un foro real |
+| El listado del foro no está paginado | ADR-10 | **Abierta** — el índice `(tema_id, fecha DESC)` ya está puesto para cuando haga falta |
+| La búsqueda del foro usa `ILIKE` en lugar de búsqueda de texto completo | ADR-10 | **Abierta** — cambio contenido dentro del repositorio |
+| El catálogo interpola en `innerHTML` sin escapar | ADR-10 | **Abierta** — sin vector hoy, porque su contenido no lo escribe ningún usuario |
 
 Las deudas abiertas están documentadas a propósito. Una deuda registrada es una decisión; una deuda
 silenciosa es un problema esperando a aparecer en la peor demo posible.
