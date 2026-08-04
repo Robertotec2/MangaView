@@ -14,6 +14,7 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const db = require('../patterns/DatabaseSingleton');
+const { asegurarBaseDeDatos } = require('./crear-base');
 const { MANGAS, rutaPortada, rutaPagina } = require('./datos-demo');
 
 const RUTA_ESQUEMA = path.join(__dirname, 'schema.sql');
@@ -75,6 +76,10 @@ async function insertarPagina(cliente, capituloId, orden, imagenUrl) {
 }
 
 async function seed() {
+  // Sobre una instalación limpia de PostgreSQL la base todavía no existe, y el
+  // pool no podría ni abrir la conexión.
+  await asegurarBaseDeDatos();
+
   const cliente = await db.pool.connect();
   const total = { mangas: 0, capitulos: 0, paginas: 0 };
 
@@ -95,7 +100,7 @@ async function seed() {
             cliente,
             capituloId,
             orden,
-            rutaPagina(manga.abreviatura, capitulo.numero, orden)
+            rutaPagina(manga.titulo, capitulo.numero, orden, capitulo.paginas)
           );
           total.paginas++;
         }

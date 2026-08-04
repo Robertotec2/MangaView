@@ -11,6 +11,7 @@
 
 require('dotenv').config();
 const db = require('../patterns/DatabaseSingleton');
+const { asegurarBaseDeDatos } = require('./crear-base');
 const { seed } = require('./seed');
 
 const TABLAS = [
@@ -23,6 +24,10 @@ const TABLAS = [
 ];
 
 async function reset() {
+  // El DROP es lo primero que toca la base, así que hay que asegurarla antes
+  // que nada: sobre una instalación limpia fallaría al conectarse.
+  await asegurarBaseDeDatos();
+
   await db.query(`DROP TABLE IF EXISTS ${TABLAS.join(', ')} CASCADE`);
   console.log('Tablas eliminadas.');
   await seed();
