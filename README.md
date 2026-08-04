@@ -16,7 +16,7 @@ recuerda sus favoritos y por qué página iba en cada capítulo.
 | Backend | Node.js + Express |
 | Base de datos | PostgreSQL |
 | Autenticación | JWT firmado con `jsonwebtoken`, contraseñas con `bcryptjs` |
-| Portadas | Generadas como SVG por el propio servidor |
+| Portadas y páginas | Generadas como SVG por el propio servidor, sin depender de servicios externos |
 
 El proyecto de React que vive en `frontend/src/` corresponde al stack original del ADR-01 y ya no se
 ejecuta: el ADR-05 explica por qué se sustituyó. Cloudinary sigue configurado en el backend pero
@@ -43,7 +43,7 @@ hay que levantar un segundo servidor para el frontend.
 |---------|----------|
 | `npm run dev` | Levanta la API con recarga automática |
 | `npm start` | Levanta la API sin recarga |
-| `npm run db:setup` | Aplica el esquema y carga los datos de demostración. Es idempotente: puedes ejecutarlo las veces que quieras |
+| `npm run db:setup` | Crea la base de datos si falta, aplica el esquema y carga los datos de demostración. Es idempotente: puedes ejecutarlo las veces que quieras |
 | `npm run db:reset` | Borra las tablas y vuelve a crearlas desde cero. Destructivo |
 | `npm test` | Ejecuta las pruebas unitarias |
 
@@ -56,7 +56,7 @@ hay que levantar un segundo servidor para el frontend.
 | [Registro de ADR](docs/ADR-registro.md) | Índice de todas las decisiones, code smells resueltos y estado de la deuda técnica |
 | [Declaración de uso de IA](docs/DECLARACION-IA.md) | En qué se usó IA durante la entrega y qué decisiones son propias |
 
-Los ADR individuales están en la raíz del repositorio, del `ADR-01` al `ADR-08`.
+Los ADR individuales están en la raíz del repositorio, del `ADR-01` al `ADR-09`.
 
 ## Integración continua
 

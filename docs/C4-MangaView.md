@@ -116,7 +116,7 @@ flowchart TB
 
     subgraph servidor["Servidor de aplicación — Node.js, puerto 3000"]
         api["Servidor Web y API REST<br/>[Contenedor: Node.js + Express 4]<br/>Sirve el frontend estático y expone la API REST<br/>bajo /api. Valida tokens JWT, aplica las reglas de<br/>negocio y consulta la base de datos"]
-        scripts["Seed de aprovisionamiento<br/>[Contenedor: Node.js CLI]<br/>db/seed.js aplica el esquema y carga los datos de<br/>demostración en una transacción idempotente:<br/>8 mangas, 9 capítulos y 16 páginas.<br/>db/reset.js reconstruye la base desde cero"]
+        scripts["Seed de aprovisionamiento<br/>[Contenedor: Node.js CLI]<br/>db/seed.js crea la base si falta, aplica el esquema<br/>y carga los datos de demostración en una transacción<br/>idempotente: 8 mangas, 9 capítulos y 16 páginas.<br/>db/reset.js reconstruye la base desde cero"]
     end
 
     db[("Base de datos MangaView<br/>[Contenedor: PostgreSQL 5432]<br/>Seis tablas relacionales: usuarios, mangas,<br/>capitulos, paginas, favoritos y progreso_lectura")]
@@ -181,13 +181,14 @@ flowchart TB
     spa["SPA MangaView<br/>[Contenedor]"]
 
     subgraph apic["Contenedor: Servidor Web y API REST — Node.js + Express"]
-        bootstrap["index.js — Arranque y composición<br/>[Componente: aplicación Express]<br/>Habilita CORS y el parseo de JSON, publica los<br/>estáticos del frontend y de /covers y monta los<br/>cuatro routers. No contiene lógica de negocio"]
+        bootstrap["index.js — Arranque y composición<br/>[Componente: aplicación Express]<br/>Habilita CORS y el parseo de JSON, publica los<br/>estáticos del frontend y de /covers y monta los<br/>cinco routers. No contiene lógica de negocio"]
 
         subgraph capaRutas["Capa de enrutamiento"]
             rMangas["manga.routes.js<br/>[Componente: Express Router]<br/>GET /, GET /:id, GET /genero/:genero<br/>Todas públicas"]
             rCaps["capitulo.routes.js<br/>[Componente: Express Router]<br/>GET /manga/:mangaId, GET /:id públicas<br/>POST /:id/progreso protegida"]
             rUsers["usuario.routes.js<br/>[Componente: Express Router]<br/>POST /registro, POST /login públicas<br/>GET /perfil, GET y POST /favoritos protegidas"]
             rCover["cover.routes.js<br/>[Componente: Express Router]<br/>GET /:titulo devuelve la portada<br/>generada como image/svg+xml"]
+            rPagina["pagina.routes.js<br/>[Componente: Express Router]<br/>GET /:titulo/:capitulo/:orden devuelve la<br/>página del lector como image/svg+xml"]
         end
 
         auth["auth.js — verificarToken<br/>[Componente: middleware Express]<br/>Extrae el Bearer de la cabecera Authorization,<br/>verifica la firma del JWT y coloca el usuario<br/>decodificado en req.usuario"]
@@ -201,6 +202,7 @@ flowchart TB
         subgraph capaServicios["Capa de servicios — lógica de negocio"]
             sUser["usuario.service.js<br/>[Componente: fábrica con inyección]<br/>Valida, hashea contraseñas, emite tokens y<br/>traduce fallos a ErrorDeNegocio. Recibe sus<br/>dependencias, así que se prueba sin base de datos"]
             sCover["cover.service.js<br/>[Componente: función pura]<br/>generarPortadaSVG: título a SVG, con paleta<br/>por título y escapado de caracteres XML"]
+            sPagina["pagina.service.js<br/>[Componente: función pura]<br/>generarPaginaSVG: maqueta de viñetas elegida<br/>según el número de página. Reutiliza la paleta<br/>y el escapado del servicio de portadas"]
         end
 
         subgraph capaDatos["Capa de acceso a datos"]
@@ -227,6 +229,7 @@ flowchart TB
     bootstrap -->|"Monta en /api/capitulos"| rCaps
     bootstrap -->|"Monta en /api/usuarios"| rUsers
     bootstrap -->|"Monta en /api/cover"| rCover
+    bootstrap -->|"Monta en /api/page"| rPagina
 
     rCaps -->|"Protege POST /:id/progreso"| auth
     rUsers -->|"Protege perfil y favoritos"| auth
@@ -237,6 +240,8 @@ flowchart TB
     rCaps --> cCap
     rUsers --> cUser
     rCover --> sCover
+    rPagina --> sPagina
+    sPagina -->|"Reutiliza paleta y escapado XML"| sCover
 
     cUser -->|"Delega la lógica de negocio"| sUser
     sUser -->|"Aplica las reglas de entrada"| validadores
@@ -261,7 +266,7 @@ flowchart TB
     classDef externo fill:#999999,stroke:#6b6b6b,color:#ffffff
     classDef inactivo fill:#cccccc,stroke:#8a8a8a,color:#000000,stroke-dasharray: 5 5
     class spa,db contenedor
-    class bootstrap,rMangas,rCaps,rUsers,rCover,auth,cManga,cCap,cUser,sUser,sCover,rUserRepo,validadores,errores componente
+    class bootstrap,rMangas,rCaps,rUsers,rCover,rPagina,auth,cManga,cCap,cUser,sUser,sCover,sPagina,rUserRepo,validadores,errores componente
     class singleton,observer patron
     class cloudcfg inactivo
     class libBcrypt,libJwt externo
@@ -291,8 +296,11 @@ controladores siguen escribiendo SQL directamente contra el Singleton, sin pasar
 separación en capas se aplicó primero al módulo de usuarios porque era el que mezclaba más
 responsabilidades; extenderla a los otros dos está registrado como deuda técnica planificada en el ADR.
 
-Por último, `cover.service.js` es una función pura sin ninguna dependencia: entra un título y sale un SVG.
-Esa forma no es casual, es lo que permite probarlo de manera unitaria sin levantar Express ni PostgreSQL.
+Por último, `cover.service.js` y `pagina.service.js` son funciones puras: entran unos datos y sale un SVG,
+sin tocar la red ni la base. Esa forma no es casual, es lo que permite probarlos de manera unitaria sin
+levantar Express ni PostgreSQL. `pagina.service.js` depende del de portadas solo para reutilizar la paleta
+de colores y el escapado de XML, que es una medida de seguridad y por eso conviene que viva en un único
+sitio en lugar de estar copiada en dos.
 
 ---
 
@@ -381,7 +389,7 @@ ocho mangas escritos a mano en el frontend en lugar de vivir en la base de datos
 |----------------------|-----------------------------|--------------------------|
 | MangaView (sistema) | SPA, Servidor Web y API REST, Base de datos PostgreSQL, Seed de aprovisionamiento | Componentes de la API y componentes de la SPA |
 | Lector registrado | Interactúa con la SPA; su sesión vive en localStorage | Vista de autenticación, middleware `verificarToken` y `usuario.service.js` |
-| Administrador de contenido | Ejecuta el Seed de aprovisionamiento | `db/seed.js`, `db/reset.js` y `db/datos-demo.js` |
+| Administrador de contenido | Ejecuta el Seed de aprovisionamiento | `db/seed.js`, `db/reset.js`, `db/crear-base.js` y `db/datos-demo.js` |
 | Cloudinary | Sin contenedor asociado, integración pendiente | `config/cloudinary.js`, configurado sin consumidores |
 
 ---
@@ -402,6 +410,8 @@ estado actual. Este documento describe la arquitectura viva: si algo se resuelve
 | 6 | El manejo de errores devuelve `err.message` con estado 500, exponiendo detalles de la base de datos | **Resuelto en el módulo de usuarios** — errores previstos con su propio estado y genéricos para el resto |
 | 7 | La URL del backend está escrita en el código del frontend como `http://localhost:3000/api` | **Pendiente** — deuda registrada en el ADR |
 | 8 | Los patrones GOF del ADR-04 estaban implementados solo en la rama `patrones-gof`, sin fusionar | **Resuelto** — `DatabaseSingleton` y `ProgresoObserver` integrados en la línea principal |
+| 9 | El lector no mostraba las páginas: nunca creaba el elemento de imagen y las URL apuntaban a un servicio externo caído | **Resuelto** — `pagina.service.js` las genera en el servidor y el lector las muestra |
+| 10 | El aprovisionamiento se conectaba a una base de datos que no creaba, así que fallaba sobre una instalación limpia | **Resuelto** — `db/crear-base.js`, invocado por el seed y por el reset |
 
 ---
 

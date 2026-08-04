@@ -74,7 +74,7 @@ flowchart LR
     checkout --> node["Preparar Node<br/>20, 22 y 24 en paralelo"]
     node --> ci["npm ci<br/>instala el arbol exacto<br/>del package-lock.json"]
     ci --> check["node --check<br/>sobre todos los modulos"]
-    check --> test["npm test<br/>37 pruebas unitarias"]
+    check --> test["npm test<br/>toda la suite unitaria"]
     test --> verde["Pipeline en verde"]
 
     classDef paso fill:#85bbf0,stroke:#5d82a8,color:#000000
