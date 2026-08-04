@@ -83,6 +83,21 @@ const MANGAS = [
     estado: 'finalizado',
     sinopsis: 'Dos hermanos buscan la piedra filosofal para recuperar sus cuerpos perdidos tras un experimento de alquimia fallido',
     capitulos: []
+  },
+  {
+    titulo: 'Mayonaka Heart Tune',
+    autor: 'Masakuni Igarashi',
+    genero: 'Romance',
+    estado: 'en_curso',
+    // Portada propia en public/covers: noche, radio y corazon, sin depender
+    // de un servicio externo ni de arte con derechos de terceros.
+    portada: '/covers/mayonaka-heart-tune.svg',
+    sinopsis: 'Arisu Yamabuki busca a Apollo, la voz de radio que lo acompañaba por las noches. Al transferirse a un nuevo instituto descubre que puede ser cualquiera de las chicas del club de radiodifusion',
+    capitulos: [
+      { numero: 1, titulo: 'La voz de medianoche', fecha: '2023-09-20', paginas: 4 },
+      { numero: 2, titulo: 'Club de radiodifusion', fecha: '2023-09-27', paginas: 3 },
+      { numero: 3, titulo: '¿Quien es Apollo?', fecha: '2023-10-04', paginas: 3 }
+    ]
   }
 ];
 
@@ -94,6 +109,9 @@ const MANGAS = [
  * que funciona en un clon nuevo sin red y sin archivos binarios versionados.
  */
 const rutaPortada = (titulo) => `/api/cover/${encodeURIComponent(titulo)}`;
+
+/** Usa la portada propia del manga si la trae; si no, la generada por el servidor. */
+const portadaDe = (manga) => manga.portada || rutaPortada(manga.titulo);
 
 /**
  * Ruta de una página de capítulo.
@@ -107,4 +125,4 @@ const rutaPagina = (titulo, numeroCapitulo, orden, totalPaginas) =>
   `/api/page/${encodeURIComponent(titulo)}/${numeroCapitulo}/${orden}` +
   (totalPaginas ? `?total=${totalPaginas}` : '');
 
-module.exports = { MANGAS, rutaPortada, rutaPagina };
+module.exports = { MANGAS, rutaPortada, rutaPagina, portadaDe };

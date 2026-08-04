@@ -14,7 +14,8 @@ const PALETAS = {
   'Dragon Ball': ['#FF8C00', '#FFD700'],
   'Demon Slayer': ['#1a0a2e', '#9B59B6'],
   'My Hero Academia': ['#003087', '#FF0000'],
-  'Fullmetal Alchemist': ['#8B4513', '#DAA520']
+  'Fullmetal Alchemist': ['#8B4513', '#DAA520'],
+  'Mayonaka Heart Tune': ['#0b1026', '#ff6b9d']
 };
 
 const PALETA_POR_DEFECTO = ['#1a1a2e', '#e94560'];

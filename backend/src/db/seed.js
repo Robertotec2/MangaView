@@ -16,7 +16,7 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const db = require('../patterns/DatabaseSingleton');
 const { asegurarBaseDeDatos } = require('./crear-base');
-const { MANGAS, rutaPortada, rutaPagina } = require('./datos-demo');
+const { MANGAS, portadaDe, rutaPagina } = require('./datos-demo');
 const {
   TEMAS,
   USUARIOS_DEMO,
@@ -61,7 +61,7 @@ async function insertarManga(cliente, manga) {
            portada_url = EXCLUDED.portada_url,
            estado = EXCLUDED.estado
      RETURNING id`,
-    [manga.titulo, manga.autor, manga.genero, manga.sinopsis, rutaPortada(manga.titulo), manga.estado]
+    [manga.titulo, manga.autor, manga.genero, manga.sinopsis, portadaDe(manga), manga.estado]
   );
   return rows[0].id;
 }
