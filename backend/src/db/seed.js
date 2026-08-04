@@ -13,9 +13,15 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 const db = require('../patterns/DatabaseSingleton');
 const { asegurarBaseDeDatos } = require('./crear-base');
 const { MANGAS, rutaPortada, rutaPagina } = require('./datos-demo');
+const { TEMAS, USUARIOS_DEMO, PUBLICACIONES, PASSWORD_DEMO } = require('./datos-foro');
+// Se reutiliza la constante del servicio en lugar de volver a leer la variable
+// de entorno, para que el coste de bcrypt no pueda divergir entre el registro
+// real y las cuentas de demostración.
+const { RONDAS_BCRYPT } = require('../services/usuario.service');
 
 const RUTA_ESQUEMA = path.join(__dirname, 'schema.sql');
 
@@ -75,13 +81,143 @@ async function insertarPagina(cliente, capituloId, orden, imagenUrl) {
   );
 }
 
+async function insertarTema(cliente, tema) {
+  const { rows } = await cliente.query(
+    `INSERT INTO foro_temas (slug, nombre, descripcion, icono, orden)
+     VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (slug) DO UPDATE
+       SET nombre = EXCLUDED.nombre,
+           descripcion = EXCLUDED.descripcion,
+           icono = EXCLUDED.icono,
+           orden = EXCLUDED.orden
+     RETURNING id`,
+    [tema.slug, tema.nombre, tema.descripcion, tema.icono, tema.orden]
+  );
+  return rows[0].id;
+}
+
+async function insertarUsuarioDemo(cliente, usuario, passwordHash) {
+  const { rows } = await cliente.query(
+    `INSERT INTO usuarios (nombre, correo, password_hash)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (correo) DO UPDATE SET nombre = EXCLUDED.nombre
+     RETURNING id`,
+    [usuario.nombre, usuario.correo, passwordHash]
+  );
+  return rows[0].id;
+}
+
+async function insertarPublicacion(cliente, temaId, autorId, publicacion) {
+  const { rows } = await cliente.query(
+    `INSERT INTO foro_publicaciones (tema_id, usuario_id, titulo, cuerpo)
+     VALUES ($1, $2, $3, $4)
+     ON CONFLICT (tema_id, titulo) DO UPDATE
+       SET cuerpo = EXCLUDED.cuerpo,
+           usuario_id = EXCLUDED.usuario_id
+     RETURNING id`,
+    [temaId, autorId, publicacion.titulo, publicacion.cuerpo]
+  );
+  return rows[0].id;
+}
+
+/**
+ * Los comentarios no tienen clave natural: dos personas pueden escribir lo
+ * mismo y ambas son válidas. En lugar de inventarle una restricción artificial
+ * a la tabla, el seed solo carga la conversación de ejemplo cuando la
+ * publicación todavía no tiene ningún comentario. Así sigue siendo idempotente
+ * y además no pisa lo que se haya escrito de verdad durante una demo.
+ */
+async function insertarComentarios(cliente, publicacionId, comentarios, idsUsuarios) {
+  const { rows } = await cliente.query(
+    'SELECT COUNT(*)::int AS total FROM foro_comentarios WHERE publicacion_id = $1',
+    [publicacionId]
+  );
+  if (rows[0].total > 0) return 0;
+
+  for (const comentario of comentarios) {
+    await cliente.query(
+      `INSERT INTO foro_comentarios (publicacion_id, usuario_id, cuerpo)
+       VALUES ($1, $2, $3)`,
+      [publicacionId, idsUsuarios[comentario.autor], comentario.cuerpo]
+    );
+  }
+  return comentarios.length;
+}
+
+async function insertarReacciones(cliente, publicacionId, reacciones, idsUsuarios) {
+  const votos = [
+    ...(reacciones.like || []).map((indice) => [indice, 1]),
+    ...(reacciones.dislike || []).map((indice) => [indice, -1])
+  ];
+
+  for (const [indice, valor] of votos) {
+    await cliente.query(
+      `INSERT INTO foro_reacciones (publicacion_id, usuario_id, valor)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (publicacion_id, usuario_id) DO UPDATE SET valor = EXCLUDED.valor`,
+      [publicacionId, idsUsuarios[indice], valor]
+    );
+  }
+  return votos.length;
+}
+
+/**
+ * Visitantes simulados, para que el contador de personas que vieron la
+ * publicación tenga algo que mostrar en la demo. Las huellas son sintéticas y
+ * reconocibles, así que no se confunden con las de visitantes reales.
+ */
+async function insertarVistas(cliente, publicacionId, cuantas) {
+  for (let i = 1; i <= cuantas; i++) {
+    await cliente.query(
+      `INSERT INTO foro_vistas (publicacion_id, huella)
+       VALUES ($1, $2)
+       ON CONFLICT (publicacion_id, huella) DO NOTHING`,
+      [publicacionId, `demo:${publicacionId}:${i}`]
+    );
+  }
+  return cuantas;
+}
+
+async function sembrarForo(cliente, total) {
+  const idsTemas = {};
+  for (const tema of TEMAS) {
+    idsTemas[tema.slug] = await insertarTema(cliente, tema);
+    total.temas++;
+  }
+
+  // Todas las cuentas de demostración comparten contraseña, así que basta
+  // calcular el hash una vez. bcrypt es deliberadamente lento y hacerlo por
+  // usuario multiplicaría el tiempo del seed sin ninguna ganancia.
+  const passwordHash = await bcrypt.hash(PASSWORD_DEMO, RONDAS_BCRYPT);
+
+  const idsUsuarios = [];
+  for (const usuario of USUARIOS_DEMO) {
+    idsUsuarios.push(await insertarUsuarioDemo(cliente, usuario, passwordHash));
+  }
+
+  for (const publicacion of PUBLICACIONES) {
+    const publicacionId = await insertarPublicacion(
+      cliente,
+      idsTemas[publicacion.tema],
+      idsUsuarios[publicacion.autor],
+      publicacion
+    );
+    total.publicaciones++;
+    total.comentarios += await insertarComentarios(
+      cliente, publicacionId, publicacion.comentarios || [], idsUsuarios
+    );
+    await insertarReacciones(cliente, publicacionId, publicacion.reacciones || {}, idsUsuarios);
+    await insertarVistas(cliente, publicacionId, publicacion.vistas || 0);
+  }
+}
+
 async function seed() {
   // Sobre una instalación limpia de PostgreSQL la base todavía no existe, y el
   // pool no podría ni abrir la conexión.
   await asegurarBaseDeDatos();
 
   const cliente = await db.pool.connect();
-  const total = { mangas: 0, capitulos: 0, paginas: 0 };
+  const total = { mangas: 0, capitulos: 0, paginas: 0, temas: 0, publicaciones: 0, comentarios: 0 };
 
   try {
     await cliente.query('BEGIN');
@@ -107,10 +243,16 @@ async function seed() {
       }
     }
 
+    await sembrarForo(cliente, total);
+
     await cliente.query('COMMIT');
     console.log(
       `Aprovisionamiento completo: ${total.mangas} mangas, ` +
       `${total.capitulos} capitulos y ${total.paginas} paginas.`
+    );
+    console.log(
+      `Foro: ${total.temas} temas, ${total.publicaciones} publicaciones ` +
+      `y ${total.comentarios} comentarios nuevos.`
     );
   } catch (err) {
     await cliente.query('ROLLBACK');
