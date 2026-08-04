@@ -17,7 +17,15 @@ const bcrypt = require('bcryptjs');
 const db = require('../patterns/DatabaseSingleton');
 const { asegurarBaseDeDatos } = require('./crear-base');
 const { MANGAS, rutaPortada, rutaPagina } = require('./datos-demo');
-const { TEMAS, USUARIOS_DEMO, PUBLICACIONES, PASSWORD_DEMO } = require('./datos-foro');
+const {
+  TEMAS,
+  USUARIOS_DEMO,
+  PUBLICACIONES,
+  PASSWORD_DEMO,
+  LISTAS_DEMO,
+  SEGUIDOS_DEMO,
+  MARCADORES_DEMO
+} = require('./datos-foro');
 // Se reutiliza la constante del servicio en lugar de volver a leer la variable
 // de entorno, para que el coste de bcrypt no pueda divergir entre el registro
 // real y las cuentas de demostración.
@@ -107,15 +115,16 @@ async function insertarUsuarioDemo(cliente, usuario, passwordHash) {
   return rows[0].id;
 }
 
-async function insertarPublicacion(cliente, temaId, autorId, publicacion) {
+async function insertarPublicacion(cliente, temaId, autorId, publicacion, mangaId = null) {
   const { rows } = await cliente.query(
-    `INSERT INTO foro_publicaciones (tema_id, usuario_id, titulo, cuerpo)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO foro_publicaciones (tema_id, usuario_id, titulo, cuerpo, manga_id)
+     VALUES ($1, $2, $3, $4, $5)
      ON CONFLICT (tema_id, titulo) DO UPDATE
        SET cuerpo = EXCLUDED.cuerpo,
-           usuario_id = EXCLUDED.usuario_id
+           usuario_id = EXCLUDED.usuario_id,
+           manga_id = EXCLUDED.manga_id
      RETURNING id`,
-    [temaId, autorId, publicacion.titulo, publicacion.cuerpo]
+    [temaId, autorId, publicacion.titulo, publicacion.cuerpo, mangaId]
   );
   return rows[0].id;
 }
@@ -126,6 +135,8 @@ async function insertarPublicacion(cliente, temaId, autorId, publicacion) {
  * a la tabla, el seed solo carga la conversación de ejemplo cuando la
  * publicación todavía no tiene ningún comentario. Así sigue siendo idempotente
  * y además no pisa lo que se haya escrito de verdad durante una demo.
+ *
+ * `respuestaA` es el índice del comentario padre dentro del mismo arreglo.
  */
 async function insertarComentarios(cliente, publicacionId, comentarios, idsUsuarios) {
   const { rows } = await cliente.query(
@@ -134,12 +145,19 @@ async function insertarComentarios(cliente, publicacionId, comentarios, idsUsuar
   );
   if (rows[0].total > 0) return 0;
 
+  const idsInsertados = [];
   for (const comentario of comentarios) {
-    await cliente.query(
-      `INSERT INTO foro_comentarios (publicacion_id, usuario_id, cuerpo)
-       VALUES ($1, $2, $3)`,
-      [publicacionId, idsUsuarios[comentario.autor], comentario.cuerpo]
+    let padreId = null;
+    if (Number.isInteger(comentario.respuestaA)) {
+      padreId = idsInsertados[comentario.respuestaA] || null;
+    }
+    const { rows: creados } = await cliente.query(
+      `INSERT INTO foro_comentarios (publicacion_id, usuario_id, cuerpo, padre_id)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id`,
+      [publicacionId, idsUsuarios[comentario.autor], comentario.cuerpo, padreId]
     );
+    idsInsertados.push(creados[0].id);
   }
   return comentarios.length;
 }
@@ -178,7 +196,57 @@ async function insertarVistas(cliente, publicacionId, cuantas) {
   return cuantas;
 }
 
-async function sembrarForo(cliente, total) {
+async function mapaMangasPorTitulo(cliente) {
+  const { rows } = await cliente.query('SELECT id, titulo FROM mangas');
+  return Object.fromEntries(rows.map((r) => [r.titulo, r.id]));
+}
+
+async function sembrarBiblioteca(cliente, idsUsuarios, idsMangas, total) {
+  for (const fila of LISTAS_DEMO) {
+    const mangaId = idsMangas[fila.manga];
+    if (!mangaId) continue;
+    await cliente.query(
+      `INSERT INTO listas_lectura (usuario_id, manga_id, estado)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (usuario_id, manga_id) DO UPDATE SET estado = EXCLUDED.estado`,
+      [idsUsuarios[fila.usuario], mangaId, fila.estado]
+    );
+    total.listas++;
+  }
+
+  for (const fila of SEGUIDOS_DEMO) {
+    const mangaId = idsMangas[fila.manga];
+    if (!mangaId) continue;
+    // Fecha anterior a los capítulos del catálogo (años 90–2000), para que en
+    // la demo cuenten como avisos "publicados desde que empezaste a seguir".
+    await cliente.query(
+      `INSERT INTO mangas_seguidos (usuario_id, manga_id, fecha)
+       VALUES ($1, $2, '1990-01-01')
+       ON CONFLICT (usuario_id, manga_id) DO UPDATE SET fecha = EXCLUDED.fecha`,
+      [idsUsuarios[fila.usuario], mangaId]
+    );
+    total.seguidos++;
+  }
+
+  for (const fila of MARCADORES_DEMO) {
+    const mangaId = idsMangas[fila.manga];
+    if (!mangaId) continue;
+    const { rows } = await cliente.query(
+      'SELECT id FROM capitulos WHERE manga_id = $1 AND numero = $2',
+      [mangaId, fila.capitulo]
+    );
+    if (!rows[0]) continue;
+    await cliente.query(
+      `INSERT INTO marcadores (usuario_id, capitulo_id, pagina, nota)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (usuario_id, capitulo_id, pagina) DO UPDATE SET nota = EXCLUDED.nota`,
+      [idsUsuarios[fila.usuario], rows[0].id, fila.pagina, fila.nota]
+    );
+    total.marcadores++;
+  }
+}
+
+async function sembrarForo(cliente, total, idsMangas) {
   const idsTemas = {};
   for (const tema of TEMAS) {
     idsTemas[tema.slug] = await insertarTema(cliente, tema);
@@ -196,11 +264,13 @@ async function sembrarForo(cliente, total) {
   }
 
   for (const publicacion of PUBLICACIONES) {
+    const mangaId = publicacion.manga ? idsMangas[publicacion.manga] || null : null;
     const publicacionId = await insertarPublicacion(
       cliente,
       idsTemas[publicacion.tema],
       idsUsuarios[publicacion.autor],
-      publicacion
+      publicacion,
+      mangaId
     );
     total.publicaciones++;
     total.comentarios += await insertarComentarios(
@@ -209,6 +279,8 @@ async function sembrarForo(cliente, total) {
     await insertarReacciones(cliente, publicacionId, publicacion.reacciones || {}, idsUsuarios);
     await insertarVistas(cliente, publicacionId, publicacion.vistas || 0);
   }
+
+  await sembrarBiblioteca(cliente, idsUsuarios, idsMangas, total);
 }
 
 async function seed() {
@@ -217,7 +289,10 @@ async function seed() {
   await asegurarBaseDeDatos();
 
   const cliente = await db.pool.connect();
-  const total = { mangas: 0, capitulos: 0, paginas: 0, temas: 0, publicaciones: 0, comentarios: 0 };
+  const total = {
+    mangas: 0, capitulos: 0, paginas: 0, temas: 0, publicaciones: 0,
+    comentarios: 0, listas: 0, seguidos: 0, marcadores: 0
+  };
 
   try {
     await cliente.query('BEGIN');
@@ -243,7 +318,8 @@ async function seed() {
       }
     }
 
-    await sembrarForo(cliente, total);
+    const idsMangas = await mapaMangasPorTitulo(cliente);
+    await sembrarForo(cliente, total, idsMangas);
 
     await cliente.query('COMMIT');
     console.log(
@@ -253,6 +329,10 @@ async function seed() {
     console.log(
       `Foro: ${total.temas} temas, ${total.publicaciones} publicaciones ` +
       `y ${total.comentarios} comentarios nuevos.`
+    );
+    console.log(
+      `Biblioteca: ${total.listas} en listas, ${total.seguidos} follows ` +
+      `y ${total.marcadores} marcadores.`
     );
   } catch (err) {
     await cliente.query('ROLLBACK');

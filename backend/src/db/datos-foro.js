@@ -81,31 +81,34 @@ const PUBLICACIONES = [
   {
     tema: 'discusiones',
     autor: 0,
+    manga: 'Attack on Titan',
     titulo: '¿Por que Attack on Titan sigue dividiendo tanto a la gente?',
     cuerpo: 'Lo termine hace poco y me sorprende la cantidad de lecturas distintas que tiene. Hay quien lo ve como una historia sobre la libertad y quien lo ve como una tragedia sobre el ciclo del odio. Las dos se sostienen con lo que pasa en pagina. ¿Ustedes con cual se quedan?',
     vistas: 47,
     reacciones: { like: [1, 2, 3, 4, 6], dislike: [] },
     comentarios: [
       { autor: 2, cuerpo: 'Para mi el tema central es que nadie decide donde nace, y todo lo demas sale de ahi.' },
-      { autor: 4, cuerpo: 'Yo lo lei como una tragedia clasica. El final me parecio coherente aunque duela.' },
+      { autor: 4, cuerpo: 'Yo lo lei como una tragedia clasica. El final me parecio coherente aunque duela.', respuestaA: 0 },
       { autor: 1, cuerpo: 'Lo que mas me gusta es que no te da una respuesta masticada. Te obliga a elegir.' }
     ]
   },
   {
     tema: 'discusiones',
     autor: 3,
+    manga: 'Dragon Ball',
     titulo: 'Dragon Ball envejecio mejor de lo que esperaba',
     cuerpo: 'Volvi a leerlo despues de anos pensando que me iba a parecer lento y resulto lo contrario. El ritmo de los primeros arcos es comodo y el dibujo de las peleas se entiende siempre, cosa que no puedo decir de series mas nuevas.',
     vistas: 31,
     reacciones: { like: [0, 5, 7], dislike: [2] },
     comentarios: [
       { autor: 5, cuerpo: 'Toriyama tenia una claridad para componer una pagina que casi nadie iguala.' },
-      { autor: 7, cuerpo: 'Coincido, aunque los arcos finales se me hacen mas pesados que el resto.' }
+      { autor: 7, cuerpo: 'Coincido, aunque los arcos finales se me hacen mas pesados que el resto.', respuestaA: 0 }
     ]
   },
   {
     tema: 'recomendaciones',
     autor: 1,
+    manga: 'Death Note',
     titulo: 'Busco algo parecido a Death Note pero mas corto',
     cuerpo: 'Me gusto muchisimo la tension de Death Note, ese ida y vuelta de dos personas inteligentes midiendose. El problema es que ahora tengo poco tiempo y busco algo que se lea en pocos tomos. ¿Alguna sugerencia?',
     vistas: 58,
@@ -113,8 +116,8 @@ const PUBLICACIONES = [
     comentarios: [
       { autor: 6, cuerpo: 'Si lo que buscas es el duelo mental mas que lo sobrenatural, cualquier thriller de detectives corto te va a funcionar.' },
       { autor: 0, cuerpo: 'Ojo con los que empiezan bien y se estiran. Fijate siempre en el numero de tomos antes de engancharte.' },
-      { autor: 3, cuerpo: 'Fullmetal Alchemist no es corto pero no tiene relleno, si eso te sirve.' },
-      { autor: 4, cuerpo: 'Apoyo lo de Fullmetal. Es largo pero nunca se siente estirado.' }
+      { autor: 3, cuerpo: 'Fullmetal Alchemist no es corto pero no tiene relleno, si eso te sirve.', respuestaA: 0 },
+      { autor: 4, cuerpo: 'Apoyo lo de Fullmetal. Es largo pero nunca se siente estirado.', respuestaA: 2 }
     ]
   },
   {
@@ -153,15 +156,38 @@ const PUBLICACIONES = [
     ]
   },
   {
+    tema: 'noticias',
+    autor: 0,
+    manga: 'One Piece',
+    titulo: 'Nuevo capitulo de One Piece disponible en el catalogo',
+    cuerpo: 'Si sigues One Piece, ya puedes leer el capitulo recien cargado en MangaView. Entra al titulo desde el catalogo o desde tus avisos si lo tienes seguido.',
+    vistas: 22,
+    reacciones: { like: [1, 2, 5], dislike: [] },
+    comentarios: [
+      { autor: 1, cuerpo: 'Justo lo que esperaba. Gracias por el aviso.' }
+    ]
+  },
+  {
+    tema: 'noticias',
+    autor: 2,
+    manga: 'Naruto',
+    titulo: 'Nuevo capitulo de Naruto en el lector',
+    cuerpo: 'Quienes siguen Naruto ya tienen capitulo nuevo para leer. Recuerda que puedes guardar un marcador en la pagina que te guste para volver despues.',
+    vistas: 18,
+    reacciones: { like: [0, 4, 6], dislike: [] },
+    comentarios: []
+  },
+  {
     tema: 'spoilers',
     autor: 5,
+    manga: 'Fullmetal Alchemist',
     titulo: '[Spoilers] Hablemos del final de Fullmetal Alchemist',
     cuerpo: 'Aviso desde el titulo para que nadie entre por accidente. Lo que mas me gusta del cierre es que el precio que pagan los hermanos es coherente con la regla que la historia establecio en el primer capitulo. No aparece una solucion magica al final.',
     vistas: 38,
     reacciones: { like: [1, 3, 6], dislike: [] },
     comentarios: [
       { autor: 1, cuerpo: 'Justo eso. La historia se toma en serio sus propias reglas hasta el final.' },
-      { autor: 6, cuerpo: 'Es de los pocos finales donde el sacrificio se siente ganado y no impuesto por el guion.' }
+      { autor: 6, cuerpo: 'Es de los pocos finales donde el sacrificio se siente ganado y no impuesto por el guion.', respuestaA: 0 }
     ]
   },
   {
@@ -201,4 +227,44 @@ const PUBLICACIONES = [
   }
 ];
 
-module.exports = { TEMAS, USUARIOS_DEMO, PUBLICACIONES, PASSWORD_DEMO };
+/**
+ * Listas, follows y marcadores de demostración. Los índices de usuario apuntan
+ * a USUARIOS_DEMO; los mangas se resuelven por título.
+ */
+const LISTAS_DEMO = [
+  { usuario: 0, manga: 'Attack on Titan', estado: 'terminado' },
+  { usuario: 0, manga: 'One Piece', estado: 'leyendo' },
+  { usuario: 0, manga: 'Death Note', estado: 'pendiente' },
+  { usuario: 1, manga: 'Death Note', estado: 'terminado' },
+  { usuario: 1, manga: 'Fullmetal Alchemist', estado: 'leyendo' },
+  { usuario: 1, manga: 'Naruto', estado: 'pendiente' },
+  { usuario: 2, manga: 'Demon Slayer', estado: 'leyendo' },
+  { usuario: 3, manga: 'Dragon Ball', estado: 'terminado' },
+  { usuario: 4, manga: 'My Hero Academia', estado: 'pendiente' }
+];
+
+const SEGUIDOS_DEMO = [
+  { usuario: 0, manga: 'One Piece' },
+  { usuario: 0, manga: 'Naruto' },
+  { usuario: 1, manga: 'One Piece' },
+  { usuario: 1, manga: 'Attack on Titan' },
+  { usuario: 2, manga: 'Naruto' },
+  { usuario: 5, manga: 'Attack on Titan' }
+];
+
+// Solo mangas con capítulos en el seed (Naruto, One Piece, Attack on Titan).
+const MARCADORES_DEMO = [
+  { usuario: 0, manga: 'One Piece', capitulo: 1, pagina: 2, nota: 'Escena del barco' },
+  { usuario: 1, manga: 'Naruto', capitulo: 1, pagina: 1, nota: 'Inicio' },
+  { usuario: 0, manga: 'Attack on Titan', capitulo: 1, pagina: 2, nota: null }
+];
+
+module.exports = {
+  TEMAS,
+  USUARIOS_DEMO,
+  PUBLICACIONES,
+  PASSWORD_DEMO,
+  LISTAS_DEMO,
+  SEGUIDOS_DEMO,
+  MARCADORES_DEMO
+};
