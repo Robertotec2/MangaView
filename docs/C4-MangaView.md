@@ -116,7 +116,7 @@ flowchart TB
 
     subgraph servidor["Servidor de aplicación — Node.js, puerto 3000"]
         api["Servidor Web y API REST<br/>[Contenedor: Node.js + Express 4]<br/>Sirve el frontend estático y expone la API REST<br/>bajo /api. Valida tokens JWT, aplica las reglas de<br/>negocio y consulta la base de datos"]
-        scripts["Scripts de aprovisionamiento<br/>[Contenedor: Node.js CLI]<br/>Once archivos setup.js … setup11.js que crean<br/>las tablas y cargan mangas, capítulos,<br/>páginas y portadas de demostración"]
+        scripts["Seed de aprovisionamiento<br/>[Contenedor: Node.js CLI]<br/>db/seed.js aplica el esquema y carga los datos de<br/>demostración en una transacción idempotente:<br/>8 mangas, 9 capítulos y 16 páginas.<br/>db/reset.js reconstruye la base desde cero"]
     end
 
     db[("Base de datos MangaView<br/>[Contenedor: PostgreSQL 5432]<br/>Seis tablas relacionales: usuarios, mangas,<br/>capitulos, paginas, favoritos y progreso_lectura")]
@@ -131,8 +131,8 @@ flowchart TB
     spa -->|"Solicita portadas: archivos en /covers<br/>y SVG generados en /api/cover/:titulo"| api
     spa -->|"Descarga las imágenes de cada página"| placeholder
     api -->|"Consulta y actualiza mediante SQL<br/>sobre un pool de conexiones pg"| db
-    admin -->|"Ejecuta node src/setupN.js"| scripts
-    scripts -->|"Crea tablas e inserta datos<br/>de demostración con SQL"| db
+    admin -->|"Ejecuta npm run db:setup"| scripts
+    scripts -->|"Aplica schema.sql e inserta los datos<br/>con SQL, usando ON CONFLICT"| db
     legacy -.->|"Consumía la misma API mediante axios"| api
 
     classDef persona fill:#08427b,stroke:#052e56,color:#ffffff
@@ -181,34 +181,52 @@ flowchart TB
     spa["SPA MangaView<br/>[Contenedor]"]
 
     subgraph apic["Contenedor: Servidor Web y API REST — Node.js + Express"]
-        bootstrap["index.js — Arranque y composición<br/>[Componente: aplicación Express]<br/>Habilita CORS y el parseo de JSON, publica los<br/>estáticos del frontend y de /covers, monta los tres<br/>routers y además define en línea el endpoint<br/>GET /api/cover/:titulo que genera portadas SVG"]
+        bootstrap["index.js — Arranque y composición<br/>[Componente: aplicación Express]<br/>Habilita CORS y el parseo de JSON, publica los<br/>estáticos del frontend y de /covers y monta los<br/>cuatro routers. No contiene lógica de negocio"]
 
         subgraph capaRutas["Capa de enrutamiento"]
             rMangas["manga.routes.js<br/>[Componente: Express Router]<br/>GET /, GET /:id, GET /genero/:genero<br/>Todas públicas"]
             rCaps["capitulo.routes.js<br/>[Componente: Express Router]<br/>GET /manga/:mangaId, GET /:id públicas<br/>POST /:id/progreso protegida"]
             rUsers["usuario.routes.js<br/>[Componente: Express Router]<br/>POST /registro, POST /login públicas<br/>GET /perfil, GET y POST /favoritos protegidas"]
+            rCover["cover.routes.js<br/>[Componente: Express Router]<br/>GET /:titulo devuelve la portada<br/>generada como image/svg+xml"]
         end
 
         auth["auth.js — verificarToken<br/>[Componente: middleware Express]<br/>Extrae el Bearer de la cabecera Authorization,<br/>verifica la firma del JWT y coloca el usuario<br/>decodificado en req.usuario"]
 
-        subgraph capaControl["Capa de controladores"]
-            cManga["manga.controller.js<br/>[Componente]<br/>getAll, getById, getByGenero.<br/>Escribe el SQL del catálogo"]
-            cCap["capitulo.controller.js<br/>[Componente]<br/>getByManga, getById, guardarProgreso.<br/>Compone capítulo y páginas, y hace<br/>el upsert del progreso de lectura"]
-            cUser["usuario.controller.js<br/>[Componente]<br/>registro, login, perfil, favoritos,<br/>agregarFavorito. Hashea contraseñas<br/>y emite los tokens"]
+        subgraph capaControl["Capa de controladores — solo traducen HTTP"]
+            cManga["manga.controller.js<br/>[Componente]<br/>getAll, getById, getByGenero.<br/>Todavía escribe su propio SQL"]
+            cCap["capitulo.controller.js<br/>[Componente]<br/>getByManga, getById, guardarProgreso.<br/>Todavía escribe su propio SQL y emite<br/>el evento de progreso"]
+            cUser["usuario.controller.js<br/>[Componente]<br/>registro, login, perfil, favoritos,<br/>agregarFavorito. Delega todo al servicio<br/>y traduce los errores a códigos HTTP"]
         end
 
-        dbcfg["database.js<br/>[Componente: Singleton de pg.Pool]<br/>Crea un único pool de conexiones a partir de<br/>variables de entorno y lo exporta. Todos los<br/>controladores comparten esta instancia"]
-        cloudcfg["cloudinary.js<br/>[Componente configurado sin consumidores]<br/>Inicializa el SDK con las credenciales del .env.<br/>Ningún controlador lo importa todavía"]
+        subgraph capaServicios["Capa de servicios — lógica de negocio"]
+            sUser["usuario.service.js<br/>[Componente: fábrica con inyección]<br/>Valida, hashea contraseñas, emite tokens y<br/>traduce fallos a ErrorDeNegocio. Recibe sus<br/>dependencias, así que se prueba sin base de datos"]
+            sCover["cover.service.js<br/>[Componente: función pura]<br/>generarPortadaSVG: título a SVG, con paleta<br/>por título y escapado de caracteres XML"]
+        end
+
+        subgraph capaDatos["Capa de acceso a datos"]
+            rUserRepo["usuario.repository.js<br/>[Componente: Repository]<br/>Único lugar con SQL de usuarios y favoritos"]
+            singleton["patterns/DatabaseSingleton.js<br/>[Componente: patrón Singleton]<br/>Pool único de conexiones compartido por<br/>controladores, repositorios y el seed"]
+        end
+
+        observer["patterns/ProgresoObserver.js<br/>[Componente: patrón Observer]<br/>Emite el evento de progreso guardado a los<br/>observers de log y de estadísticas, sin que<br/>el controlador los conozca"]
+
+        subgraph utils["Utilidades compartidas"]
+            validadores["utils/validadores.js<br/>[Componente: funciones puras]<br/>Reglas de correo y de contraseña"]
+            errores["utils/errores.js<br/>[Componente]<br/>ErrorDeNegocio con su estado HTTP"]
+        end
+
+        cloudcfg["config/cloudinary.js<br/>[Componente configurado sin consumidores]<br/>Inicializa el SDK con las credenciales del .env.<br/>Ningún componente lo importa todavía"]
     end
 
     db[("Base de datos MangaView<br/>[Contenedor: PostgreSQL]")]
-    libBcrypt["bcryptjs<br/>[Librería externa]<br/>Hash de contraseñas, 10 rondas"]
+    libBcrypt["bcryptjs<br/>[Librería externa]<br/>Hash de contraseñas"]
     libJwt["jsonwebtoken<br/>[Librería externa]<br/>Firma y verificación de tokens"]
 
     spa -->|"HTTP JSON"| bootstrap
     bootstrap -->|"Monta en /api/mangas"| rMangas
     bootstrap -->|"Monta en /api/capitulos"| rCaps
     bootstrap -->|"Monta en /api/usuarios"| rUsers
+    bootstrap -->|"Monta en /api/cover"| rCover
 
     rCaps -->|"Protege POST /:id/progreso"| auth
     rUsers -->|"Protege perfil y favoritos"| auth
@@ -218,45 +236,63 @@ flowchart TB
     rMangas --> cManga
     rCaps --> cCap
     rUsers --> cUser
+    rCover --> sCover
 
-    cManga -->|"pool.query con SQL embebido"| dbcfg
-    cCap -->|"pool.query con SQL embebido"| dbcfg
-    cUser -->|"pool.query con SQL embebido"| dbcfg
-    dbcfg -->|"Protocolo pg sobre TCP 5432"| db
+    cUser -->|"Delega la lógica de negocio"| sUser
+    sUser -->|"Aplica las reglas de entrada"| validadores
+    sUser -->|"Lanza y propaga"| errores
+    cUser -->|"Traduce a código HTTP"| errores
+    sUser -->|"Consulta y persiste"| rUserRepo
 
-    cUser -->|"hash y compare"| libBcrypt
-    cUser -->|"sign"| libJwt
+    cManga -->|"SQL embebido, deuda pendiente"| singleton
+    cCap -->|"SQL embebido, deuda pendiente"| singleton
+    rUserRepo --> singleton
+    singleton -->|"Protocolo pg sobre TCP 5432"| db
+
+    cCap -->|"emit del progreso guardado"| observer
+
+    sUser -->|"hash y compare"| libBcrypt
+    sUser -->|"sign"| libJwt
     auth -->|"verify"| libJwt
 
     classDef contenedor fill:#438dd5,stroke:#2e6295,color:#ffffff
     classDef componente fill:#85bbf0,stroke:#5d82a8,color:#000000
-    classDef infra fill:#85bbf0,stroke:#5d82a8,color:#000000
+    classDef patron fill:#5aa9e6,stroke:#2e6295,color:#ffffff
     classDef externo fill:#999999,stroke:#6b6b6b,color:#ffffff
     classDef inactivo fill:#cccccc,stroke:#8a8a8a,color:#000000,stroke-dasharray: 5 5
     class spa,db contenedor
-    class bootstrap,rMangas,rCaps,rUsers,auth,cManga,cCap,cUser,dbcfg componente
+    class bootstrap,rMangas,rCaps,rUsers,rCover,auth,cManga,cCap,cUser,sUser,sCover,rUserRepo,validadores,errores componente
+    class singleton,observer patron
     class cloudcfg inactivo
     class libBcrypt,libJwt externo
     style apic fill:#f7f7f7,stroke:#bbbbbb
     style capaRutas fill:#eef4fa,stroke:#c3d5e6
     style capaControl fill:#eef4fa,stroke:#c3d5e6
+    style capaServicios fill:#eef4fa,stroke:#c3d5e6
+    style capaDatos fill:#eef4fa,stroke:#c3d5e6
+    style utils fill:#eef4fa,stroke:#c3d5e6
 ```
 
 ### Lectura del diagrama
 
-El flujo de una petición es siempre el mismo y sigue el estilo en capas declarado en el ADR-03:
-`index.js` → router → (middleware de autenticación si la ruta es protegida) → controlador →
-`database.js` → PostgreSQL. Ese camino uniforme es lo que hace predecible el backend.
+El flujo de una petición sigue el estilo en capas declarado en el ADR-03, y en el módulo de usuarios ese
+estilo ya está completo: `index.js` → router → middleware de autenticación si la ruta es protegida →
+controlador → servicio → repositorio → `DatabaseSingleton` → PostgreSQL. Cada eslabón tiene una sola
+razón para cambiar.
 
-El diagrama también deja ver **dónde se rompe la separación en capas**: no existe una capa de repositorio
-ni de modelos. El SQL está escrito directamente dentro de cada controlador, por lo que los controladores
-dependen a la vez de las reglas de negocio, del esquema de la base de datos y de la API de `pg`. Es un
-acoplamiento fuerte que el diagrama hace evidente al mostrar las tres flechas `pool.query con SQL
-embebido` apuntando al mismo componente de infraestructura.
+Los dos patrones GOF documentados en el ADR-04 aparecen aquí en azul más intenso, porque son decisiones de
+diseño explícitas y no simples archivos: el **Singleton** es el punto único por el que pasa todo el
+acceso a datos, y el **Observer** es la única flecha que sale de un controlador sin esperar respuesta
+—`capitulo.controller.js` emite el evento de progreso y no sabe quién lo escucha.
 
-`index.js` no es solo un archivo de arranque: además de componer la aplicación, contiene la lógica de
-generación de portadas SVG con un diccionario de colores por título escrito a mano. Es responsabilidad de
-negocio dentro del punto de entrada.
+El diagrama también muestra con honestidad **lo que queda por hacer**. Las flechas etiquetadas como `SQL
+embebido, deuda pendiente` salen de `manga.controller.js` y de `capitulo.controller.js`: esos dos
+controladores siguen escribiendo SQL directamente contra el Singleton, sin pasar por un repositorio. La
+separación en capas se aplicó primero al módulo de usuarios porque era el que mezclaba más
+responsabilidades; extenderla a los otros dos está registrado como deuda técnica planificada en el ADR.
+
+Por último, `cover.service.js` es una función pura sin ninguna dependencia: entra un título y sale un SVG.
+Esa forma no es casual, es lo que permite probarlo de manera unitaria sin levantar Express ni PostgreSQL.
 
 ---
 
@@ -343,34 +379,29 @@ ocho mangas escritos a mano en el frontend en lugar de vivir en la base de datos
 
 | Elemento del Nivel 1 | Se descompone en el Nivel 2 | Se detalla en el Nivel 3 |
 |----------------------|-----------------------------|--------------------------|
-| MangaView (sistema) | SPA, Servidor Web y API REST, Base de datos PostgreSQL, Scripts de aprovisionamiento | Componentes de la API y componentes de la SPA |
-| Lector registrado | Interactúa con la SPA; su sesión vive en localStorage | Vista de autenticación y middleware `verificarToken` |
-| Administrador de contenido | Ejecuta los Scripts de aprovisionamiento | Los once archivos `setup*.js` |
+| MangaView (sistema) | SPA, Servidor Web y API REST, Base de datos PostgreSQL, Seed de aprovisionamiento | Componentes de la API y componentes de la SPA |
+| Lector registrado | Interactúa con la SPA; su sesión vive en localStorage | Vista de autenticación, middleware `verificarToken` y `usuario.service.js` |
+| Administrador de contenido | Ejecuta el Seed de aprovisionamiento | `db/seed.js`, `db/reset.js` y `db/datos-demo.js` |
 | Cloudinary | Sin contenedor asociado, integración pendiente | `config/cloudinary.js`, configurado sin consumidores |
 
 ---
 
 ## Notas de fidelidad: diferencias entre lo documentado y lo implementado
 
-Estas observaciones surgieron al construir los diagramas a partir del código real. Se registran aquí
-porque son la entrada directa para la evaluación ATAM y para la actualización del ADR.
+Estas observaciones surgieron al construir los diagramas a partir del código real. Fueron la entrada
+directa para la evaluación ATAM y para la refactorización posterior, así que se conservan aquí junto con su
+estado actual. Este documento describe la arquitectura viva: si algo se resuelve, se actualiza.
 
-1. **El `README.md` y los ADR-01 a ADR-03 describen un frontend en React + TypeScript**, pero el frontend
-   que realmente se sirve es la SPA en JavaScript vanilla decidida en el ADR-05. Los archivos de React
-   siguen en el repositorio sin ejecutarse.
-2. **Cloudinary está documentado como parte de la arquitectura y configurado en el código**, pero ningún
-   controlador lo importa. Las imágenes de páginas apuntan a `via.placeholder.com` y las portadas se
-   sirven desde `/covers` o se generan como SVG en el propio servidor.
-3. **Existen once scripts `setup.js` a `setup11.js`** que cumplen la función de migraciones, con DDL y DML
-   duplicados entre ellos y respecto a `config/schema.sql`. No hay un orden de ejecución declarado.
-4. **No hay capa de repositorio ni de modelos.** El SQL vive dentro de los controladores, aunque el ADR-03
-   declara un estilo en capas.
-5. **No existen pruebas unitarias ni pipeline de integración continua** en el repositorio: no hay carpeta
-   `.github/workflows`, ni framework de pruebas, ni script `test` en ninguno de los dos `package.json`.
-6. **El manejo de errores devuelve `err.message` al cliente** con estado 500 en todos los controladores,
-   lo que expone detalles internos de la base de datos.
-7. **La URL del backend está escrita en el código del frontend** como `http://localhost:3000/api`, sin
-   configuración por entorno.
+| # | Observación al levantar los diagramas | Estado |
+|---|----------------------------------------|--------|
+| 1 | El `README.md` y los ADR-01 a ADR-03 describen un frontend en React + TypeScript, pero el que se sirve es la SPA en JavaScript vanilla del ADR-05. Los archivos de React siguen en el repositorio sin ejecutarse | **Pendiente** — deuda registrada en el ADR |
+| 2 | Cloudinary está documentado y configurado, pero ningún componente lo importa | **Pendiente** — integración no realizada, se mantiene la decisión del ADR-01 |
+| 3 | Once scripts `setup.js` a `setup11.js` hacían de migraciones, con DDL duplicado y sin orden declarado | **Resuelto** — consolidados en `db/seed.js`, idempotente y transaccional |
+| 4 | No hay capa de repositorio ni de modelos; el SQL vive en los controladores | **Resuelto en parte** — aplicado al módulo de usuarios; `manga` y `capitulo` siguen pendientes |
+| 5 | No existen pruebas unitarias ni pipeline de integración continua | **Resuelto** — pruebas con Arrange-Act-Assert y pipeline en `.github/workflows/ci.yml` |
+| 6 | El manejo de errores devuelve `err.message` con estado 500, exponiendo detalles de la base de datos | **Resuelto en el módulo de usuarios** — errores previstos con su propio estado y genéricos para el resto |
+| 7 | La URL del backend está escrita en el código del frontend como `http://localhost:3000/api` | **Pendiente** — deuda registrada en el ADR |
+| 8 | Los patrones GOF del ADR-04 estaban implementados solo en la rama `patrones-gof`, sin fusionar | **Resuelto** — `DatabaseSingleton` y `ProgresoObserver` integrados en la línea principal |
 
 ---
 
