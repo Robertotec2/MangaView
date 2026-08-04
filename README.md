@@ -54,6 +54,7 @@ hay que levantar un segundo servidor para el frontend.
 | [Modelo C4](docs/C4-MangaView.md) | La arquitectura en tres niveles: contexto, contenedores y componentes |
 | [Evaluación ATAM](docs/ATAM-MangaView.md) | Riesgo, trade-off y punto de sensibilidad de las decisiones tomadas |
 | [Registro de ADR](docs/ADR-registro.md) | Índice de todas las decisiones, code smells resueltos y estado de la deuda técnica |
+| [Declaración de uso de IA](docs/DECLARACION-IA.md) | En qué se usó IA durante la entrega y qué decisiones son propias |
 
 Los ADR individuales están en la raíz del repositorio, del `ADR-01` al `ADR-08`.
 
@@ -103,5 +104,5 @@ MangaView/
 ## Declaración de uso de IA
 
 Este proyecto usó IA (Cursor) como apoyo en la elaboración de los diagramas C4, la evaluación ATAM y la
-refactorización del backend. El detalle de en qué consistió esa ayuda está declarado al final de cada
-documento afectado.
+refactorización del backend. El detalle está en la [declaración completa](docs/DECLARACION-IA.md) y, de
+forma resumida, al final de cada documento afectado.

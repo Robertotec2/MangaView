@@ -40,6 +40,7 @@ Documentos de apoyo que no son ADR pero sostienen las decisiones del ADR-07 y de
 
 - [Modelo C4](C4-MangaView.md) — la arquitectura viva, en tres niveles.
 - [Evaluación ATAM](ATAM-MangaView.md) — la evaluación fechada que justificó la refactorización.
+- [Declaración de uso de IA](DECLARACION-IA.md) — en qué se apoyó la IA y qué criterio es propio.
 
 ---
 
