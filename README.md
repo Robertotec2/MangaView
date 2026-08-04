@@ -32,6 +32,17 @@ renata@demo.mangaview     bruno@demo.mangaview
 
 Son cuentas de demostración con un dominio que no existe, no cuentas de uso real.
 
+## Biblioteca personal
+
+Con sesión iniciada puedes:
+
+- **Listas** — pendiente, leyendo o terminado (aparte de favoritos)
+- **Seguir mangas** — avisos de capítulos nuevos en el menú Avisos
+- **Marcadores** — guardar una página concreta desde el lector
+- En el foro: **citar un manga**, **responder** a comentarios, **editar/borrar** lo tuyo y **reportar**
+
+El detalle está en el [ADR-11](ADR-11-Roberto.md).
+
 ## Tecnologías
 
 | Capa | Tecnología |
@@ -80,7 +91,11 @@ hay que levantar un segundo servidor para el frontend.
 | [Registro de ADR](docs/ADR-registro.md) | Índice de todas las decisiones, code smells resueltos y estado de la deuda técnica |
 | [Declaración de uso de IA](docs/DECLARACION-IA.md) | En qué se usó IA durante la entrega y qué decisiones son propias |
 
-Los ADR individuales están en la raíz del repositorio, del `ADR-01` al `ADR-10`.
+Los ADR individuales están en la raíz del repositorio, del `ADR-01` al `ADR-11`.
+
+Además del foro, con sesión puedes usar **listas de lectura** (pendiente / leyendo / terminado),
+**seguir mangas** (avisos de capítulos), **citar un manga** al publicar, **editar/borrar/reportar**
+en el foro, **responder comentarios** y **marcar páginas** en el lector.
 
 ## Integración continua
 
