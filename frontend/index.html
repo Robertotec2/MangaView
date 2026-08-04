@@ -124,7 +124,20 @@
     .foro-form{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:20px;}
     .foro-form input,.foro-form select,.foro-form textarea{width:100%;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--txt);font-size:13px;font-family:inherit;margin-bottom:10px;}
     .foro-form textarea{min-height:130px;resize:vertical;line-height:1.7;}
-    @media(max-width:600px){.detail-hero{flex-direction:column;}.detail-cover{width:100%;height:240px;}.grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));}.foro-wrap,.post-detail{padding:20px 16px;}}
+    .manga-cite{display:flex;gap:12px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin:14px 0;cursor:pointer;}
+    .manga-cite img{width:48px;height:68px;object-fit:cover;border-radius:4px;background:var(--bg4);}
+    .manga-cite .info{font-size:13px;}.manga-cite .info small{display:block;color:var(--txt2);margin-top:3px;}
+    .comment.reply{margin-left:28px;border-left:2px solid var(--acc);}.comment.deleted p{font-style:italic;color:var(--txt3);}
+    .comment-actions{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;}
+    .comment-actions button{background:none;border:none;color:var(--txt3);font-size:11px;cursor:pointer;font-family:inherit;padding:0;}
+    .comment-actions button:hover{color:var(--acc);}
+    .post-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;}
+    .aviso-item,.marcador-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;gap:14px;align-items:center;cursor:pointer;}
+    .aviso-item:hover,.marcador-item:hover{border-color:var(--acc);}
+    .aviso-item img,.marcador-item img{width:52px;height:72px;object-fit:cover;border-radius:4px;background:var(--bg4);}
+    .tabs-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+    .tabs-row .fbtn{padding:7px 16px;}
+    @media(max-width:600px){.detail-hero{flex-direction:column;}.detail-cover{width:100%;height:240px;}.grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));}.foro-wrap,.post-detail{padding:20px 16px;}.nav-links{flex-wrap:wrap;justify-content:flex-end;}}
   </style>
 </head>
 <body>
@@ -134,6 +147,9 @@
     <button class="theme-btn" onclick="toggleTheme()">🌙</button>
     <button class="nav-btn" onclick="showForo()">Foro</button>
     <button class="nav-btn" onclick="showPage('privacyPage')">Privacidad</button>
+    <button class="nav-btn" id="listasBtn" onclick="showListas()" style="display:none">Listas</button>
+    <button class="nav-btn" id="avisosBtn" onclick="showAvisos()" style="display:none">Avisos</button>
+    <button class="nav-btn" id="marcadoresBtn" onclick="showMarcadores()" style="display:none">Marcadores</button>
     <button class="nav-btn" id="favsBtn" onclick="showFavs()" style="display:none">♥ Favoritos</button>
     <button class="nav-btn" id="profileBtn" onclick="showProfile()" style="display:none">Mi perfil</button>
     <button class="nav-btn acc" id="loginBtn" onclick="showPage('authPage')">Iniciar sesión</button>
@@ -180,6 +196,34 @@
   <div class="favs-wrap"><h1>♥ Mis favoritos</h1><div class="grid" id="favsGrid"><div class="empty">Cargando...</div></div></div>
 </div>
 
+<div class="page" id="listasPage">
+  <div class="favs-wrap">
+    <h1>Mis listas de lectura</h1>
+    <div class="tabs-row" id="listasTabs">
+      <button class="fbtn active" onclick="cargarListas('pendiente',this)">Pendientes</button>
+      <button class="fbtn" onclick="cargarListas('leyendo',this)">Leyendo</button>
+      <button class="fbtn" onclick="cargarListas('terminado',this)">Terminados</button>
+    </div>
+    <div class="grid" id="listasGrid"><div class="empty">Cargando...</div></div>
+  </div>
+</div>
+
+<div class="page" id="avisosPage">
+  <div class="favs-wrap">
+    <h1>Avisos de mangas que sigues</h1>
+    <p style="color:var(--txt2);font-size:13px;margin-bottom:18px;">Capítulos nuevos de los títulos que sigues, y avisos publicados en Noticias.</p>
+    <div id="avisosList"><div class="empty">Cargando...</div></div>
+  </div>
+</div>
+
+<div class="page" id="marcadoresPage">
+  <div class="favs-wrap">
+    <h1>Mis marcadores</h1>
+    <p style="color:var(--txt2);font-size:13px;margin-bottom:18px;">Páginas guardadas para volver más tarde.</p>
+    <div id="marcadoresList"><div class="empty">Cargando...</div></div>
+  </div>
+</div>
+
 <div class="page" id="foroPage">
   <div class="foro-wrap">
     <div class="foro-head">
@@ -198,6 +242,7 @@
     <div class="foro-form" id="foroForm" style="display:none">
       <div class="msg" id="foroMsg"></div>
       <select id="nuevoTema"></select>
+      <select id="nuevoManga"><option value="">Sin citar manga</option></select>
       <input type="text" id="nuevoTitulo" placeholder="Título de la publicación" maxlength="200"/>
       <textarea id="nuevoCuerpo" placeholder="Escribe aquí tu publicación..." maxlength="5000"></textarea>
       <button class="btn-acc" onclick="publicar()">Publicar</button>
@@ -215,8 +260,8 @@
     <h1>Política de Privacidad</h1>
     <p class="date">Última actualización: Junio 2026</p>
     <h2>1. Información que recopilamos</h2>
-    <p>MangaView recopila la información que el usuario proporciona al momento del registro: nombre, correo electrónico y contraseña. También registramos el progreso de lectura y los títulos marcados como favoritos.</p>
-    <p>En el foro se guardan las publicaciones, los comentarios y las reacciones que escribes, asociados a tu cuenta y visibles para el resto de la comunidad. Si eliminas tu cuenta, tus publicaciones permanecen sin autor para no dejar huecos en las conversaciones de otras personas.</p>
+    <p>MangaView recopila la información que el usuario proporciona al momento del registro: nombre, correo electrónico y contraseña. También registramos el progreso de lectura, los títulos marcados como favoritos, las listas de lectura, los mangas que sigues, los marcadores de página y los reportes que envías en el foro.</p>
+    <p>En el foro se guardan las publicaciones, los comentarios y las reacciones que escribes, asociados a tu cuenta y visibles para el resto de la comunidad. Si eliminas tu cuenta, tus publicaciones permanecen sin autor para no dejar huecos en las conversaciones de otras personas. Puedes editar o borrar tu propio contenido; los reportes los revisaría un administrador.</p>
     <h2>1.1 Conteo de visitas del foro</h2>
     <p>Para mostrar cuántas personas vieron una publicación necesitamos distinguir visitantes, no visitas. Con la sesión iniciada usamos el identificador de tu cuenta. Sin sesión calculamos un código irreversible a partir de la dirección de conexión y del navegador: no se puede volver atrás para obtener esos datos y <strong>nunca almacenamos tu dirección IP</strong>. Ese código solo sirve para no contarte dos veces en la misma publicación.</p>
     <h2>2. Uso de la información</h2>
@@ -270,7 +315,14 @@ async function submitAuth(){
 }
 
 function logout(){localStorage.removeItem('token');localStorage.removeItem('user');updateNav();goHome();toast('Sesión cerrada');}
-function updateNav(){const u=JSON.parse(localStorage.getItem('user')||'null');document.getElementById('loginBtn').style.display=u?'none':'';document.getElementById('logoutBtn').style.display=u?'':'none';document.getElementById('profileBtn').style.display=u?'':'none';document.getElementById('favsBtn').style.display=u?'':'none';}
+function updateNav(){
+  const u=JSON.parse(localStorage.getItem('user')||'null');
+  const show=u?'':'none', hide=u?'none':'';
+  document.getElementById('loginBtn').style.display=hide;
+  ['logoutBtn','profileBtn','favsBtn','listasBtn','avisosBtn','marcadoresBtn'].forEach(id=>{
+    document.getElementById(id).style.display=show;
+  });
+}
 function getToken(){return localStorage.getItem('token');}
 
 async function loadCatalog(){
@@ -371,18 +423,34 @@ async function openManga(id){
     const manga=await mRes.json(),chapters=await cRes.json();
     const u=JSON.parse(localStorage.getItem('user')||'null');
     const ex=MANGA_EXTRA[id]||{};
+    let estadoLista=null,siguiendo=false;
+    if(u){
+      try{
+        const st=await (await fetch(`${API}/biblioteca/estado/${id}`,{headers:cabecerasAuth()})).json();
+        estadoLista=st.estado;siguiendo=!!st.siguiendo;
+      }catch{}
+    }
+    const tituloJs=manga.titulo.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     document.getElementById('detailContent').innerHTML=`
       <div style="background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:12px;">
         <button class="btn-out" onclick="goHome()" style="padding:6px 14px;font-size:13px;">← Volver</button>
-        <span style="color:var(--txt2);font-size:13px;">${manga.genero||''} › ${manga.titulo}</span>
+        <span style="color:var(--txt2);font-size:13px;">${esc(manga.genero||'')} › ${esc(manga.titulo)}</span>
       </div>
       <div style="display:flex;gap:0;max-width:1100px;margin:0 auto;padding:28px 20px;flex-wrap:wrap;">
 
         <!-- Columna izquierda -->
         <div style="width:220px;min-width:180px;margin-right:32px;flex-shrink:0;">
-          <img src="${manga.portada_url||''}" alt="${manga.titulo}" onerror="this.onerror=null;this.style.background='#222'" style="width:100%;border-radius:6px;box-shadow:0 4px 20px rgba(0,0,0,.5);margin-bottom:14px;"/>
-          ${chapters.length?`<button class="btn-acc" style="width:100%;margin-bottom:8px;" onclick="openChapter(${chapters[0].id},'${manga.titulo}',1)">▶ Leer ahora</button>`:''}
-          ${u?`<button class="btn-out" style="width:100%;margin-bottom:8px;" onclick="toggleFav(${manga.id})">♥ Agregar a favoritos</button>`:''}
+          <img src="${manga.portada_url||''}" alt="${esc(manga.titulo)}" onerror="this.onerror=null;this.style.background='#222'" style="width:100%;border-radius:6px;box-shadow:0 4px 20px rgba(0,0,0,.5);margin-bottom:14px;"/>
+          ${chapters.length?`<button class="btn-acc" style="width:100%;margin-bottom:8px;" onclick="openChapter(${chapters[0].id},'${tituloJs}',1)">▶ Leer ahora</button>`:''}
+          ${u?`<button class="btn-out" style="width:100%;margin-bottom:8px;" onclick="toggleFav(${manga.id})">♥ Agregar a favoritos</button>
+          <button class="btn-out" style="width:100%;margin-bottom:8px;" onclick="toggleSeguir(${manga.id},${siguiendo})">${siguiendo?'✓ Siguiendo':'＋ Seguir manga'}</button>
+          <select id="listaEstado" onchange="cambiarLista(${manga.id},this.value)" style="width:100%;margin-bottom:8px;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--txt);font-family:inherit;font-size:13px;">
+            <option value="">Añadir a lista...</option>
+            <option value="pendiente" ${estadoLista==='pendiente'?'selected':''}>Pendiente</option>
+            <option value="leyendo" ${estadoLista==='leyendo'?'selected':''}>Leyendo</option>
+            <option value="terminado" ${estadoLista==='terminado'?'selected':''}>Terminado</option>
+          </select>
+          ${estadoLista?`<button class="btn-out" style="width:100%;margin-bottom:8px;" onclick="quitarLista(${manga.id})">Quitar de la lista</button>`:''}`:''}
           <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:8px;">
             <div style="font-size:12px;font-weight:700;color:var(--txt2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">Información</div>
             ${[
@@ -454,22 +522,50 @@ async function openManga(id){
 
 async function toggleFav(id){const t=getToken();if(!t){showPage('authPage');return;}try{await fetch(`${API}/usuarios/favoritos/${id}`,{method:'POST',headers:{'Authorization':'Bearer '+t}});toast('Agregado a favoritos ♥');}catch{toast('Error al guardar favorito');}}
 
+async function cambiarLista(mangaId,estado){
+  if(!estado)return;
+  const t=getToken();if(!t){showPage('authPage');return;}
+  try{
+    const res=await fetch(`${API}/biblioteca/listas/${mangaId}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify({estado})});
+    const data=await res.json();
+    if(!res.ok){toast(data.error||'No se pudo guardar');return;}
+    toast('Guardado en '+estado);openManga(mangaId);
+  }catch{toast('No se pudo conectar');}
+}
+async function quitarLista(mangaId){
+  const t=getToken();if(!t)return;
+  try{await fetch(`${API}/biblioteca/listas/${mangaId}`,{method:'DELETE',headers:{Authorization:'Bearer '+t}});toast('Quitado de la lista');openManga(mangaId);}catch{toast('Error');}
+}
+async function toggleSeguir(mangaId,yaSigue){
+  const t=getToken();if(!t){showPage('authPage');return;}
+  try{
+    const res=await fetch(`${API}/biblioteca/siguiendo/${mangaId}`,{method:yaSigue?'DELETE':'POST',headers:{Authorization:'Bearer '+t}});
+    const data=await res.json();
+    if(!res.ok){toast(data.error||'No se pudo actualizar');return;}
+    toast(yaSigue?'Dejaste de seguir':'Ahora sigues este manga');openManga(mangaId);
+  }catch{toast('No se pudo conectar');}
+}
+
 async function openChapter(id,title,num){
-  try{const res=await fetch(`${API}/capitulos/${id}`);currentChapter=await res.json();currentPage=0;renderReader(title,num);showPage('readerPage');}
+  try{const res=await fetch(`${API}/capitulos/${id}`);currentChapter=await res.json();currentPage=0;currentReaderTitle=title;currentReaderNum=num;renderReader(title,num);showPage('readerPage');}
   catch{toast('Error al cargar el capítulo');}
 }
 
+let currentReaderTitle='',currentReaderNum=1;
+
 function renderReader(title,num){
   const pages=currentChapter.paginas||[];
+  const sesion=!!getToken();
   document.getElementById('readerContent').innerHTML=`
     <div class="reader-header">
       <button class="back-btn" onclick="history.back()">‹</button>
-      <div><h2>${title}</h2><div class="chap">Capítulo ${num}${currentChapter.titulo?' — '+currentChapter.titulo:''}</div></div>
+      <div style="flex:1"><h2>${esc(title)}</h2><div class="chap">Capítulo ${num}${currentChapter.titulo?' — '+esc(currentChapter.titulo):''}</div></div>
+      ${sesion?`<button class="btn-out" style="padding:6px 12px;font-size:12px;" onclick="guardarMarcador()">🔖 Marcar página</button>`:''}
     </div>
     <div class="reader-body">
       <div class="reader-click-zones"><div class="zone-left" onclick="prevPage()"></div><div class="zone-right" onclick="nextPage()"></div></div>
       <div class="reader-page" id="readerImg">
-        ${pages.length?`<img src="${pages[currentPage]}" alt="${title} — pagina ${currentPage+1}" style="width:100%;max-width:800px;border-radius:8px;background:#1a1a1a;display:block;" onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('div'),{className:'no-pages',innerHTML:'<p>No se pudo cargar la página</p>'}));"/>`:`<div class="no-pages"><div style="font-size:48px;margin-bottom:16px">📖</div><p>Este capítulo no tiene páginas cargadas aún</p></div>`}
+        ${pages.length?`<img src="${pages[currentPage]}" alt="${esc(title)} — pagina ${currentPage+1}" style="width:100%;max-width:800px;border-radius:8px;background:#1a1a1a;display:block;" onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('div'),{className:'no-pages',innerHTML:'<p>No se pudo cargar la página</p>'}));"/>`:`<div class="no-pages"><div style="font-size:48px;margin-bottom:16px">📖</div><p>Este capítulo no tiene páginas cargadas aún</p></div>`}
       </div>
     </div>
     <div class="reader-nav">
@@ -477,6 +573,17 @@ function renderReader(title,num){
       <div class="page-counter" id="pageCounter">${pages.length?`${currentPage+1} / ${pages.length}`:'—'}</div>
       <button id="nextBtn" onclick="nextPage()" ${currentPage>=pages.length-1?'disabled':''}>Siguiente →</button>
     </div>`;
+}
+
+async function guardarMarcador(){
+  const t=getToken();if(!t||!currentChapter)return;
+  const nota=prompt('Nota opcional para este marcador:','')||'';
+  try{
+    const res=await fetch(`${API}/biblioteca/marcadores`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify({capituloId:currentChapter.id,pagina:currentPage+1,nota})});
+    const data=await res.json();
+    if(!res.ok){toast(data.error||'No se pudo guardar');return;}
+    toast('Marcador guardado en la página '+(currentPage+1));
+  }catch{toast('No se pudo conectar');}
 }
 
 function prevPage(){if(currentPage>0){currentPage--;updateReaderPage();}}
@@ -497,22 +604,81 @@ async function showProfile(){const t=getToken();if(!t){showPage('authPage');retu
 async function showFavs(){const t=getToken();if(!t){showPage('authPage');return;}showPage('favsPage');try{const res=await fetch(`${API}/usuarios/favoritos`,{headers:{'Authorization':'Bearer '+t}});const f=await res.json();const g=document.getElementById('favsGrid');if(!f.length){g.innerHTML='<div class="empty">No tienes favoritos aún</div>';return;}g.innerHTML=f.map(m=>`<div class="card" onclick="openManga(${m.id})"><img src="${m.portada_url||''}" alt="${m.titulo}" onerror="this.src='https://via.placeholder.com/160x220/1a1a1a/e94560?text=Sin+portada'"/><div class="card-info"><h3>${m.titulo}</h3><p>${m.autor||''}</p><span class="badge ${m.estado}">${m.estado==='en_curso'?'En curso':'Finalizado'}</span></div></div>`).join('');}catch{document.getElementById('favsGrid').innerHTML='<div class="empty">Error al cargar favoritos</div>';}}
 
 /* ---------------------------------------------------------------------------
-   Foro de la comunidad
+   Utilidades compartidas + biblioteca + foro
    --------------------------------------------------------------------------- */
 
-let temasForo=[],temaActivo=null,publicacionActual=null,buscarTimer=null;
-
-/* El resto de la aplicación interpola en innerHTML datos que vienen del catálogo
-   y que nadie de fuera controla. En el foro el texto lo escribe cualquier
-   persona registrada, así que todo lo que venga de la API se escapa antes de
-   pintarlo: sin esto, un título con una etiqueta script se ejecutaría en el
-   navegador de quien lo lea. */
 function esc(t){return String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function fechaCorta(f){try{return new Date(f).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'});}catch{return '';}}
 function recortar(t,n){const s=String(t||'').replace(/\s+/g,' ');return s.length>n?s.slice(0,n)+'…':s;}
 function cabecerasAuth(){const t=getToken();return t?{'Authorization':'Bearer '+t}:{};}
+function usuarioActual(){return JSON.parse(localStorage.getItem('user')||'null');}
 
-async function showForo(){showPage('foroPage');if(!temasForo.length)await cargarTemas();cargarPublicaciones();}
+async function showListas(){if(!getToken()){showPage('authPage');return;}showPage('listasPage');cargarListas('pendiente',document.querySelector('#listasTabs .fbtn'));}
+async function cargarListas(estado,btn){
+  if(btn){document.querySelectorAll('#listasTabs .fbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+  const g=document.getElementById('listasGrid');
+  try{
+    const res=await fetch(`${API}/biblioteca/listas?estado=${estado}`,{headers:cabecerasAuth()});
+    const list=await res.json();
+    if(!res.ok){g.innerHTML=`<div class="empty">${esc(list.error||'Error')}</div>`;return;}
+    if(!list.length){g.innerHTML='<div class="empty">No hay mangas en esta lista</div>';return;}
+    g.innerHTML=list.map(m=>`<div class="card" onclick="openManga(${m.id})"><img src="${m.portada_url||''}" alt="${esc(m.titulo)}"/><div class="card-info"><h3>${esc(m.titulo)}</h3><p>${esc(m.autor||'')}</p><span class="badge ${m.estado}">${esc(estado)}</span></div></div>`).join('');
+  }catch{g.innerHTML='<div class="empty">No se pudo cargar</div>';}
+}
+
+async function showAvisos(){
+  if(!getToken()){showPage('authPage');return;}
+  showPage('avisosPage');
+  const box=document.getElementById('avisosList');
+  try{
+    const[avRes,forRes]=await Promise.all([
+      fetch(`${API}/biblioteca/avisos`,{headers:cabecerasAuth()}),
+      fetch(`${API}/foro/publicaciones?tema=noticias&orden=recientes`)
+    ]);
+    const avisos=await avRes.json();
+    const noticias=await forRes.json();
+    const noticiasSeguidas=(Array.isArray(noticias)?noticias:[]).filter(p=>p.manga_id);
+    let html='';
+    if(Array.isArray(avisos)&&avisos.length){
+      html+='<h2 style="font-size:15px;color:var(--txt2);margin:0 0 12px;border-left:3px solid var(--acc);padding-left:10px;">Capítulos de mangas que sigues</h2>';
+      html+=avisos.map(a=>`<div class="aviso-item" onclick="openChapter(${a.capitulo_id},'${esc(a.manga_titulo).replace(/'/g,"\\'")}',${a.numero})"><img src="${a.portada_url||''}" alt=""/><div><strong>${esc(a.manga_titulo)}</strong><div style="font-size:13px;color:var(--txt2);margin-top:4px;">Capítulo ${a.numero}${a.capitulo_titulo?' — '+esc(a.capitulo_titulo):''}</div><div style="font-size:11px;color:var(--txt3);margin-top:6px;">${fechaCorta(a.fecha_publicacion)}</div></div></div>`).join('');
+    }
+    if(noticiasSeguidas.length){
+      html+='<h2 style="font-size:15px;color:var(--txt2);margin:22px 0 12px;border-left:3px solid var(--acc);padding-left:10px;">Avisos en el foro (Noticias)</h2>';
+      html+=noticiasSeguidas.map(p=>`<div class="aviso-item" onclick="abrirPublicacion(${p.id})"><img src="${p.manga_portada||''}" alt=""/><div><strong>${esc(p.titulo)}</strong><div style="font-size:13px;color:var(--txt2);margin-top:4px;">${esc(p.manga_titulo||'')}</div><div style="font-size:11px;color:var(--txt3);margin-top:6px;">${fechaCorta(p.fecha)}</div></div></div>`).join('');
+    }
+    box.innerHTML=html||'<div class="empty">Sigue mangas desde su ficha para recibir avisos aquí</div>';
+  }catch{box.innerHTML='<div class="empty">No se pudieron cargar los avisos</div>';}
+}
+
+async function showMarcadores(){
+  if(!getToken()){showPage('authPage');return;}
+  showPage('marcadoresPage');
+  const box=document.getElementById('marcadoresList');
+  try{
+    const res=await fetch(`${API}/biblioteca/marcadores`,{headers:cabecerasAuth()});
+    const list=await res.json();
+    if(!res.ok){box.innerHTML=`<div class="empty">${esc(list.error||'Error')}</div>`;return;}
+    if(!list.length){box.innerHTML='<div class="empty">Aún no tienes marcadores. Ábrelos desde el lector.</div>';return;}
+    box.innerHTML=list.map(m=>`<div class="marcador-item"><img src="${m.portada_url||''}" alt="" onclick="openChapter(${m.capitulo_id},'${esc(m.manga_titulo).replace(/'/g,"\\'")}',${m.capitulo_numero})"/><div style="flex:1" onclick="openChapter(${m.capitulo_id},'${esc(m.manga_titulo).replace(/'/g,"\\'")}',${m.capitulo_numero})"><strong>${esc(m.manga_titulo)}</strong><div style="font-size:13px;color:var(--txt2);margin-top:4px;">Cap. ${m.capitulo_numero} · página ${m.pagina}${m.nota?' — '+esc(m.nota):''}</div></div><button class="btn-out" style="padding:6px 10px;font-size:12px;" onclick="event.stopPropagation();borrarMarcador(${m.id})">Eliminar</button></div>`).join('');
+  }catch{box.innerHTML='<div class="empty">No se pudieron cargar</div>';}
+}
+async function borrarMarcador(id){
+  try{await fetch(`${API}/biblioteca/marcadores/${id}`,{method:'DELETE',headers:cabecerasAuth()});toast('Marcador eliminado');showMarcadores();}catch{toast('Error');}
+}
+
+let temasForo=[],temaActivo=null,publicacionActual=null,buscarTimer=null,respondiendoA=null;
+
+async function showForo(){showPage('foroPage');if(!temasForo.length)await cargarTemas();await llenarSelectMangas();cargarPublicaciones();}
+
+async function llenarSelectMangas(){
+  const sel=document.getElementById('nuevoManga');
+  if(!sel||sel.options.length>1)return;
+  try{
+    const list=mangas.length?mangas:await(await fetch(`${API}/mangas`)).json();
+    sel.innerHTML='<option value="">Sin citar manga</option>'+list.map(m=>`<option value="${m.id}">${esc(m.titulo)}</option>`).join('');
+  }catch{}
+}
 
 async function cargarTemas(){
   try{
@@ -533,13 +699,13 @@ function renderTemas(){
     </div>`).join('');
 }
 
-/* Volver a pulsar el tema activo quita el filtro, para no obligar a buscar un
-   botón de "todos" separado. */
 function filtrarTema(slug){temaActivo=temaActivo===slug?null:slug;renderTemas();cargarPublicaciones();}
-
-/* La búsqueda espera a que la persona deje de escribir en lugar de pedir al
-   servidor una consulta por tecla pulsada. */
 function buscarEnForo(){clearTimeout(buscarTimer);buscarTimer=setTimeout(cargarPublicaciones,300);}
+
+function chipManga(p){
+  if(!p.manga_id||!p.manga_titulo)return'';
+  return`<div class="manga-cite" onclick="event.stopPropagation();openManga(${p.manga_id})"><img src="${p.manga_portada||''}" alt=""/><div class="info"><strong>${esc(p.manga_titulo)}</strong><small>Manga citado · abrir ficha</small></div></div>`;
+}
 
 async function cargarPublicaciones(){
   const lista=document.getElementById('postList');
@@ -559,6 +725,7 @@ async function cargarPublicaciones(){
       <div class="post-item" onclick="abrirPublicacion(${p.id})">
         <h3>${esc(p.titulo)}</h3>
         <div class="excerpt">${esc(recortar(p.cuerpo,180))}</div>
+        ${p.manga_titulo?`<div style="font-size:12px;color:var(--acc);margin-bottom:8px;">📚 ${esc(p.manga_titulo)}</div>`:''}
         <div class="post-meta">
           <span class="tema-badge">${esc(p.tema_icono)} ${esc(p.tema_nombre)}</span>
           <span>por ${esc(p.autor)}</span>
@@ -577,37 +744,82 @@ async function abrirPublicacion(id){
     const res=await fetch(`${API}/foro/publicaciones/${id}`,{headers:cabecerasAuth()});
     const data=await res.json();
     if(!res.ok){toast(data.error||'No se pudo abrir la publicación');return;}
-    publicacionActual=data;
+    publicacionActual=data;respondiendoA=null;
     renderPublicacion();
     showPage('postPage');
   }catch{toast('No se pudo conectar al servidor');}
 }
 
+function htmlComentario(c,sesion){
+  const propio=sesion&&c.usuario_id===sesion.id;
+  return`<div class="comment ${c.padre_id?'reply':''} ${c.borrado?'deleted':''}" id="com-${c.id}">
+    <div class="who">${esc(c.autor)}<span class="when">${fechaCorta(c.fecha)}${c.fecha_edicion?' · editado':''}</span></div>
+    <p>${esc(c.cuerpo)}</p>
+    ${!c.borrado&&sesion?`<div class="comment-actions">
+      <button onclick="prepararRespuesta(${c.id},'${esc(c.autor)}')">Responder</button>
+      ${propio?`<button onclick="editarComentario(${c.id})">Editar</button><button onclick="borrarComentario(${c.id})">Borrar</button>`:''}
+      <button onclick="reportarContenido({comentarioId:${c.id}})">Reportar</button>
+    </div>`:''}
+    ${(c.respuestas||[]).map(r=>htmlComentario(r,sesion)).join('')}
+  </div>`;
+}
+
+function contarComentarios(lista){
+  return (lista||[]).reduce((n,c)=>n+1+contarComentarios(c.respuestas||[]),0);
+}
+
 function renderPublicacion(){
   const p=publicacionActual;
-  const sesion=JSON.parse(localStorage.getItem('user')||'null');
+  const sesion=usuarioActual();
+  const propio=sesion&&p.usuario_id===sesion.id;
+  const total=contarComentarios(p.comentarios);
   document.getElementById('postContent').innerHTML=`
     <button class="btn-out" onclick="showForo()" style="padding:6px 14px;font-size:13px;margin-bottom:18px;">← Volver al foro</button>
     <div><span class="tema-badge">${esc(p.tema_icono)} ${esc(p.tema_nombre)}</span></div>
     <h1 style="font-size:22px;margin:12px 0 10px;">${esc(p.titulo)}</h1>
     <div class="post-meta">
       <span>por ${esc(p.autor)}</span>
-      <span>${fechaCorta(p.fecha)}</span>
+      <span>${fechaCorta(p.fecha)}${p.fecha_edicion?' · editado':''}</span>
       <span>👁 ${p.vistas} ${p.vistas===1?'persona vio':'personas vieron'} esta publicación</span>
     </div>
+    ${chipManga(p)}
     <div class="post-body">${esc(p.cuerpo)}</div>
+    <div class="post-actions">
+      ${propio?`<button class="btn-out" style="padding:6px 12px;font-size:12px;" onclick="editarPublicacion()">Editar</button>
+      <button class="btn-out" style="padding:6px 12px;font-size:12px;" onclick="borrarPublicacion()">Borrar</button>`:''}
+      ${sesion?`<button class="btn-out" style="padding:6px 12px;font-size:12px;" onclick="reportarContenido({publicacionId:${p.id}})">Reportar</button>`:''}
+    </div>
     <div class="react-row">
       <button class="react-btn ${p.mi_reaccion===1?'on':''}" onclick="reaccionar(1)">👍 ${p.likes}</button>
       <button class="react-btn ${p.mi_reaccion===-1?'on':''}" onclick="reaccionar(-1)">👎 ${p.dislikes}</button>
       <span style="font-size:12px;color:var(--txt3)">${sesion?'Puedes cambiar o retirar tu voto':'Inicia sesión para votar'}</span>
     </div>
-    <h2 style="font-size:15px;margin-bottom:12px;">Comentarios (${p.comentarios.length})</h2>
+    <h2 style="font-size:15px;margin-bottom:12px;">Comentarios (${total})</h2>
     ${sesion
-      ? `<div class="foro-form"><textarea id="nuevoComentario" placeholder="Escribe un comentario..." maxlength="2000"></textarea><button class="btn-acc" onclick="comentar()">Comentar</button></div>`
+      ? `<div class="foro-form"><div id="replyHint" style="display:none;font-size:12px;color:var(--acc);margin-bottom:8px;"></div>
+         <textarea id="nuevoComentario" placeholder="Escribe un comentario..." maxlength="2000"></textarea>
+         <button class="btn-acc" onclick="comentar()">Comentar</button>
+         <button class="btn-out" onclick="cancelarRespuesta()" style="display:none" id="cancelReply">Cancelar respuesta</button></div>`
       : `<div class="empty" style="padding:16px">Inicia sesión para participar en la conversación</div>`}
     <div>${p.comentarios.length
-      ? p.comentarios.map(c=>`<div class="comment"><div class="who">${esc(c.autor)}<span class="when">${fechaCorta(c.fecha)}</span></div><p>${esc(c.cuerpo)}</p></div>`).join('')
+      ? p.comentarios.map(c=>htmlComentario(c,sesion)).join('')
       : '<div class="empty" style="padding:16px">Todavía no hay comentarios. Sé el primero.</div>'}</div>`;
+}
+
+function prepararRespuesta(id,autor){
+  respondiendoA=id;
+  const hint=document.getElementById('replyHint');
+  const cancel=document.getElementById('cancelReply');
+  if(hint){hint.style.display='block';hint.textContent='Respondiendo a '+autor;}
+  if(cancel)cancel.style.display='inline-block';
+  document.getElementById('nuevoComentario').focus();
+}
+function cancelarRespuesta(){
+  respondiendoA=null;
+  const hint=document.getElementById('replyHint');
+  const cancel=document.getElementById('cancelReply');
+  if(hint)hint.style.display='none';
+  if(cancel)cancel.style.display='none';
 }
 
 async function reaccionar(valor){
@@ -615,9 +827,7 @@ async function reaccionar(valor){
   if(!t){toast('Inicia sesión para votar');showPage('authPage');return;}
   try{
     const res=await fetch(`${API}/foro/publicaciones/${publicacionActual.id}/reaccion`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},
-      body:JSON.stringify({valor})
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify({valor})
     });
     const data=await res.json();
     if(!res.ok){toast(data.error||'No se pudo registrar tu voto');return;}
@@ -627,15 +837,13 @@ async function reaccionar(valor){
 }
 
 async function comentar(){
-  const t=getToken();
-  if(!t){showPage('authPage');return;}
+  const t=getToken();if(!t){showPage('authPage');return;}
   const cuerpo=document.getElementById('nuevoComentario').value.trim();
   if(!cuerpo){toast('Escribe algo antes de comentar');return;}
   try{
+    const body={cuerpo};if(respondiendoA)body.padreId=respondiendoA;
     const res=await fetch(`${API}/foro/publicaciones/${publicacionActual.id}/comentarios`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},
-      body:JSON.stringify({cuerpo})
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify(body)
     });
     const data=await res.json();
     if(!res.ok){toast(data.error||'No se pudo comentar');return;}
@@ -644,32 +852,87 @@ async function comentar(){
   }catch{toast('No se pudo conectar al servidor');}
 }
 
+async function editarComentario(id){
+  const cuerpo=prompt('Edita tu comentario:');
+  if(cuerpo==null)return;
+  try{
+    const t=getToken();
+    const res=await fetch(`${API}/foro/comentarios/${id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify({cuerpo})});
+    const data=await res.json();
+    if(!res.ok){toast(data.error||'No se pudo editar');return;}
+    await abrirPublicacion(publicacionActual.id);toast('Comentario editado');
+  }catch{toast('No se pudo conectar');}
+}
+
+async function borrarComentario(id){
+  if(!confirm('¿Borrar este comentario?'))return;
+  try{
+    const res=await fetch(`${API}/foro/comentarios/${id}`,{method:'DELETE',headers:cabecerasAuth()});
+    const data=await res.json();
+    if(!res.ok){toast(data.error||'No se pudo borrar');return;}
+    await abrirPublicacion(publicacionActual.id);toast('Comentario eliminado');
+  }catch{toast('No se pudo conectar');}
+}
+
+async function editarPublicacion(){
+  const titulo=prompt('Nuevo título:',publicacionActual.titulo);if(titulo==null)return;
+  const cuerpo=prompt('Nuevo contenido:',publicacionActual.cuerpo);if(cuerpo==null)return;
+  try{
+    const t=getToken();
+    const res=await fetch(`${API}/foro/publicaciones/${publicacionActual.id}`,{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify({titulo,cuerpo,mangaId:publicacionActual.manga_id})});
+    const data=await res.json();
+    if(!res.ok){toast(data.error||'No se pudo editar');return;}
+    await abrirPublicacion(publicacionActual.id);toast('Publicación editada');
+  }catch{toast('No se pudo conectar');}
+}
+
+async function borrarPublicacion(){
+  if(!confirm('¿Borrar esta publicación?'))return;
+  try{
+    const res=await fetch(`${API}/foro/publicaciones/${publicacionActual.id}`,{method:'DELETE',headers:cabecerasAuth()});
+    const data=await res.json();
+    if(!res.ok){toast(data.error||'No se pudo borrar');return;}
+    toast('Publicación eliminada');showForo();
+  }catch{toast('No se pudo conectar');}
+}
+
+async function reportarContenido(objetivo){
+  const motivo=prompt('¿Por qué reportas este contenido?');
+  if(!motivo||!motivo.trim())return;
+  try{
+    const t=getToken();
+    const res=await fetch(`${API}/foro/reportes`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify({...objetivo,motivo})});
+    const data=await res.json();
+    if(!res.ok){toast(data.error||'No se pudo reportar');return;}
+    toast('Reporte enviado. Gracias.');
+  }catch{toast('No se pudo conectar');}
+}
+
 function alternarFormulario(){
   if(!getToken()){toast('Inicia sesión para publicar');showPage('authPage');return;}
+  llenarSelectMangas();
   const f=document.getElementById('foroForm');
   f.style.display=f.style.display==='none'?'block':'none';
   if(f.style.display==='block')document.getElementById('nuevoTitulo').focus();
 }
 
 async function publicar(){
-  const t=getToken();
-  if(!t){showPage('authPage');return;}
+  const t=getToken();if(!t){showPage('authPage');return;}
   const msg=document.getElementById('foroMsg');
+  const mangaVal=document.getElementById('nuevoManga').value;
   const cuerpo={
     tema:document.getElementById('nuevoTema').value,
     titulo:document.getElementById('nuevoTitulo').value.trim(),
-    cuerpo:document.getElementById('nuevoCuerpo').value.trim()
+    cuerpo:document.getElementById('nuevoCuerpo').value.trim(),
+    mangaId:mangaVal?Number(mangaVal):null
   };
   try{
-    const res=await fetch(`${API}/foro/publicaciones`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},
-      body:JSON.stringify(cuerpo)
-    });
+    const res=await fetch(`${API}/foro/publicaciones`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify(cuerpo)});
     const data=await res.json();
     if(!res.ok){msg.textContent=data.error||'No se pudo publicar';msg.className='msg error';return;}
     document.getElementById('nuevoTitulo').value='';
     document.getElementById('nuevoCuerpo').value='';
+    document.getElementById('nuevoManga').value='';
     msg.className='msg';
     document.getElementById('foroForm').style.display='none';
     await cargarTemas();
