@@ -31,6 +31,9 @@ function repositorioFalso({ temas = ['discusiones'], publicaciones = {} } = {}) 
       llamadas.comentarios.push(datos);
       return { id: 7, cuerpo: datos.cuerpo };
     },
+    buscarComentarioPorId: async (id) => ({
+      id, cuerpo: 'Buen aporte', autor: 'Akira', publicacion_id: 1, padre_id: null, borrado: false
+    }),
     registrarReaccion: async (datos) => {
       llamadas.reacciones.push(datos);
       return { reaccion: datos.valor };
@@ -251,7 +254,8 @@ describe('comentar', () => {
     assert.deepEqual(repositorio.llamadas.comentarios[0], {
       publicacionId: 1,
       usuarioId: 4,
-      cuerpo: 'Buen aporte'
+      cuerpo: 'Buen aporte',
+      padreId: null
     });
   });
 
