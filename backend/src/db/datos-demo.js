@@ -14,7 +14,6 @@ const MANGAS = [
     genero: 'Accion',
     estado: 'finalizado',
     sinopsis: 'Naruto Uzumaki es un joven ninja de la aldea de Konoha que carga con el zorro de nueve colas sellado en su interior y sueña con convertirse en Hokage',
-    abreviatura: 'Naruto',
     capitulos: [
       { numero: 1, titulo: 'Uzumaki Naruto!!', fecha: '1999-09-21', paginas: 3 },
       { numero: 2, titulo: 'Konohamaru!!', fecha: '1999-09-28', paginas: 2 },
@@ -27,7 +26,6 @@ const MANGAS = [
     genero: 'Aventura',
     estado: 'en_curso',
     sinopsis: 'Monkey D. Luffy zarpa en busca del tesoro legendario One Piece para convertirse en el Rey de los Piratas junto a su tripulacion',
-    abreviatura: 'OnePiece',
     capitulos: [
       { numero: 1, titulo: 'Romance Dawn', fecha: '1997-07-22', paginas: 2 },
       { numero: 2, titulo: 'Ese chico Coby', fecha: '1997-07-29', paginas: 2 },
@@ -40,7 +38,6 @@ const MANGAS = [
     genero: 'Accion',
     estado: 'finalizado',
     sinopsis: 'La humanidad sobrevive encerrada tras enormes murallas que la protegen de los titanes, hasta que una brecha lo cambia todo',
-    abreviatura: 'AoT',
     capitulos: [
       { numero: 1, titulo: 'Hace 2000 anos', fecha: '2009-09-09', paginas: 2 },
       { numero: 2, titulo: 'Ese dia', fecha: '2009-10-09', paginas: 1 },
@@ -53,7 +50,6 @@ const MANGAS = [
     genero: 'Suspenso',
     estado: 'finalizado',
     sinopsis: 'Un estudiante encuentra un cuaderno que mata a cualquier persona cuyo nombre se escriba en el',
-    abreviatura: 'DeathNote',
     capitulos: []
   },
   {
@@ -62,7 +58,6 @@ const MANGAS = [
     genero: 'Accion',
     estado: 'finalizado',
     sinopsis: 'Goku y sus amigos defienden la Tierra de enemigos cada vez mas poderosos en busca de las Dragon Balls',
-    abreviatura: 'DragonBall',
     capitulos: []
   },
   {
@@ -71,7 +66,6 @@ const MANGAS = [
     genero: 'Accion',
     estado: 'finalizado',
     sinopsis: 'Tanjiro busca la cura para su hermana convertida en demonio mientras se convierte en cazador de demonios',
-    abreviatura: 'DemonSlayer',
     capitulos: []
   },
   {
@@ -80,7 +74,6 @@ const MANGAS = [
     genero: 'Accion',
     estado: 'en_curso',
     sinopsis: 'En un mundo donde la mayoria tiene superpoderes, un chico sin habilidades suena con convertirse en el mejor heroe',
-    abreviatura: 'MHA',
     capitulos: []
   },
   {
@@ -89,7 +82,6 @@ const MANGAS = [
     genero: 'Aventura',
     estado: 'finalizado',
     sinopsis: 'Dos hermanos buscan la piedra filosofal para recuperar sus cuerpos perdidos tras un experimento de alquimia fallido',
-    abreviatura: 'FMA',
     capitulos: []
   }
 ];
@@ -104,10 +96,15 @@ const MANGAS = [
 const rutaPortada = (titulo) => `/api/cover/${encodeURIComponent(titulo)}`;
 
 /**
- * Ruta de una página de capítulo, generada de forma determinista a partir del
- * manga, el capítulo y el número de página.
+ * Ruta de una página de capítulo.
+ *
+ * Apuntaba a `via.placeholder.com`, que dejó de responder y dejó al lector sin
+ * nada que mostrar. Ahora la sirve el propio servidor, por la misma razón que
+ * las portadas: es lo único que funciona en un clon nuevo sin depender de una
+ * red ni de un servicio de terceros.
  */
-const rutaPagina = (abreviatura, numeroCapitulo, orden) =>
-  `https://via.placeholder.com/800x1200/111111/eeeeee?text=${abreviatura}+C${numeroCapitulo}+P${orden}`;
+const rutaPagina = (titulo, numeroCapitulo, orden, totalPaginas) =>
+  `/api/page/${encodeURIComponent(titulo)}/${numeroCapitulo}/${orden}` +
+  (totalPaginas ? `?total=${totalPaginas}` : '');
 
 module.exports = { MANGAS, rutaPortada, rutaPagina };
