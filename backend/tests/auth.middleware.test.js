@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 
 process.env.JWT_SECRET = 'secreto-solo-para-pruebas';
 
-const { verificarToken } = require('../src/middleware/auth');
+const { verificarToken, identificarUsuario } = require('../src/middleware/auth');
 
 /** Doble de prueba de la respuesta de Express: guarda lo que se le pide. */
 const crearRes = () => ({
@@ -86,5 +86,76 @@ describe('verificarToken', () => {
     assert.equal(res.estado, null, 'no debe responder nada si el token es valido');
     assert.equal(req.usuario.id, 7);
     assert.equal(req.usuario.correo, 'roberto@gmail.com');
+  });
+});
+
+/**
+ * Este middleware protege rutas públicas del foro, así que la propiedad
+ * importante es la contraria a la de `verificarToken`: nunca debe cortar la
+ * petición, pero tampoco debe dar por buena una sesión que no lo es.
+ */
+describe('identificarUsuario', () => {
+  test('deja pasar sin usuario cuando no hay cabecera de autorizacion', () => {
+    // Arrange
+    const req = { headers: {} };
+    const res = crearRes();
+    let siguienteInvocado = false;
+    const next = () => { siguienteInvocado = true; };
+
+    // Act
+    identificarUsuario(req, res, next);
+
+    // Assert
+    assert.equal(siguienteInvocado, true);
+    assert.equal(res.estado, null);
+    assert.equal(req.usuario, undefined);
+  });
+
+  test('expone el usuario cuando el token es valido', () => {
+    // Arrange
+    const token = jwt.sign({ id: 21, correo: 'yuki@demo.mangaview' }, process.env.JWT_SECRET);
+    const req = { headers: { authorization: `Bearer ${token}` } };
+    const res = crearRes();
+    let siguienteInvocado = false;
+    const next = () => { siguienteInvocado = true; };
+
+    // Act
+    identificarUsuario(req, res, next);
+
+    // Assert
+    assert.equal(siguienteInvocado, true);
+    assert.equal(req.usuario.id, 21);
+  });
+
+  test('trata un token firmado con otro secreto como si no hubiera sesion', () => {
+    // Arrange
+    const tokenAjeno = jwt.sign({ id: 99 }, 'otro-secreto');
+    const req = { headers: { authorization: `Bearer ${tokenAjeno}` } };
+    const res = crearRes();
+    let siguienteInvocado = false;
+    const next = () => { siguienteInvocado = true; };
+
+    // Act
+    identificarUsuario(req, res, next);
+
+    // Assert
+    assert.equal(siguienteInvocado, true, 'la ruta es publica: no debe cortarse');
+    assert.equal(req.usuario, undefined, 'un token invalido no puede otorgar identidad');
+  });
+
+  test('trata un token expirado como si no hubiera sesion', () => {
+    // Arrange
+    const tokenExpirado = jwt.sign({ id: 5 }, process.env.JWT_SECRET, { expiresIn: '-1s' });
+    const req = { headers: { authorization: `Bearer ${tokenExpirado}` } };
+    const res = crearRes();
+    let siguienteInvocado = false;
+    const next = () => { siguienteInvocado = true; };
+
+    // Act
+    identificarUsuario(req, res, next);
+
+    // Assert
+    assert.equal(siguienteInvocado, true);
+    assert.equal(req.usuario, undefined);
   });
 });
